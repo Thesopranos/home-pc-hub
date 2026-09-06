@@ -73,7 +73,25 @@ def parse_scene_key(key: str) -> str | None:
     return None
 
 
+def mode_key(device_id: str, preset_id: str) -> str:
+    return f"mode:{device_id}:{preset_id}"
+
+
+def parse_mode_key(key: str) -> tuple[str, str] | None:
+    if not key.startswith("mode:"):
+        return None
+    rest = key[5:]
+    if ":" not in rest:
+        return None
+    device_id, preset_id = rest.rsplit(":", 1)
+    if not device_id or not preset_id:
+        return None
+    return device_id, preset_id
+
+
 def parse_target_key(key: str) -> tuple[str, int | None]:
+    if key.startswith("scene:") or key.startswith("mode:"):
+        return key, None
     if ":" in key:
         did, sock = key.rsplit(":", 1)
         try:
@@ -94,11 +112,15 @@ def get_hotkeys() -> dict:
     scenes = bucket.get("scenes") or {}
     if not isinstance(scenes, dict):
         scenes = {}
+    modes = bucket.get("modes") or {}
+    if not isinstance(modes, dict):
+        modes = {}
     return {
         "flyout": str(bucket.get("flyout") or ""),
         "settings": str(bucket.get("settings") or ""),
         "targets": dict(bucket.get("targets") or {}),
         "scenes": {str(k): str(v) for k, v in scenes.items() if str(v).strip()},
+        "modes": {str(k): str(v) for k, v in modes.items() if str(v).strip()},
         "shared": [format_combo(str(c)) for c in shared if str(c).strip()],
     }
 
@@ -132,6 +154,7 @@ def set_hotkeys(
     settings: str,
     targets: dict[str, str],
     scenes: dict[str, str] | None = None,
+    modes: dict[str, str] | None = None,
     shared: list[str] | None = None,
 ) -> None:
     cfg = load_config()
@@ -141,9 +164,21 @@ def set_hotkeys(
         for k, v in (scenes or {}).items()
         if str(v).strip()
     }
+    mode_cleaned = {
+        str(k): str(v).strip()
+        for k, v in (modes or {}).items()
+        if str(v).strip()
+    }
     merged = dict(cleaned)
     for sid, combo in scene_cleaned.items():
         merged[scene_key(sid)] = combo
+    for mk, combo in mode_cleaned.items():
+        # stored as "device_id:preset_id"
+        if ":" in mk:
+            did, pid = mk.rsplit(":", 1)
+            merged[mode_key(did, pid)] = combo
+        else:
+            merged[f"mode:{mk}"] = combo
     conflicts = find_target_conflicts(merged)
     if shared is None:
         prev = get_hotkeys().get("shared") or []
@@ -155,6 +190,7 @@ def set_hotkeys(
         "settings": (settings or "").strip(),
         "targets": cleaned,
         "scenes": scene_cleaned,
+        "modes": mode_cleaned,
         "shared": shared,
     }
     save_config(cfg)
@@ -192,6 +228,24 @@ def _run_scene(scene_id: str) -> None:
 
     try:
         scene_store.apply_scene(scene_id)
+    except Exception:
+        pass
+
+
+def _apply_bulb_mode(device_id: str, preset_id: str) -> None:
+    from homepchub.core.presets.base import apply_preset
+
+    devices = load_config().get("devices") or []
+    device = next((d for d in devices if d.get("id") == device_id), None)
+    if not device or not device.get("host"):
+        return
+    try:
+        apply_preset(
+            device["host"],
+            preset_id,
+            device_id=device_id,
+            run_actions=True,
+        )
     except Exception:
         pass
 
@@ -301,6 +355,13 @@ def reload() -> None:
         if not combo:
             continue
         by_combo[format_combo(combo)].append(functools.partial(_run_scene, sid))
+    for mk, combo in (hk.get("modes") or {}).items():
+        if not combo or ":" not in mk:
+            continue
+        did, pid = mk.rsplit(":", 1)
+        by_combo[format_combo(combo)].append(
+            functools.partial(_apply_bulb_mode, did, pid)
+        )
     for combo, cbs in by_combo.items():
         if len(cbs) == 1:
             _register(combo, cbs[0])

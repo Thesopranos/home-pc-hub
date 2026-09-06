@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 
 from homepchub.core import hotkeys as hotkey_engine
+from homepchub.core import presets as bulb_presets
 from homepchub.core import scenes as scene_store
 from homepchub.core.config import load_config
 from homepchub.i18n import t
@@ -367,6 +368,61 @@ def open_hotkey_panel(parent: tk.Misc, theme_mode: str) -> None:
         _add_row(body, label, var, row_i)
         row_i += 1
 
+    # Ambient modes per bulb
+    tk.Label(
+        body,
+        text=t("hotkey.section_modes"),
+        bg=theme["bg"],
+        fg=theme["text_muted"],
+        font=FONTS["ui_bold"],
+        anchor="w",
+    ).grid(row=row_i, column=0, columnspan=3, sticky="w", pady=(14, 4))
+    row_i += 1
+    mode_combos = dict(hk.get("modes") or {})
+    preset_ids = bulb_presets.list_preset_ids()
+    bulbs = [
+        d
+        for d in devices
+        if d.get("id") and (d.get("kind") == "bulb" or d.get("has_light"))
+        and not (
+            d.get("kind") == "strip" or int(d.get("socket_count") or 0) > 1
+        )
+    ]
+    # Also include devices that are bulbs even if they somehow have sockets=0
+    if not bulbs:
+        bulbs = [
+            d
+            for d in devices
+            if d.get("id") and (d.get("kind") == "bulb" or d.get("has_light"))
+        ]
+    if not bulbs or not preset_ids:
+        tk.Label(
+            body,
+            text=t("hotkey.no_modes"),
+            bg=theme["bg"],
+            fg=theme["text_muted"],
+            font=FONTS["subtitle"],
+            anchor="w",
+        ).grid(row=row_i, column=0, columnspan=3, sticky="w")
+        row_i += 1
+    else:
+        for device in bulbs:
+            did = device["id"]
+            dname = device.get("alias") or device.get("host") or did
+            for pid in preset_ids:
+                key = hotkey_engine.mode_key(did, pid)
+                store_key = f"{did}:{pid}"
+                label = t(
+                    "hotkey.mode_label",
+                    device=dname,
+                    mode=bulb_presets.preset_label(pid),
+                )
+                row_labels[key] = label
+                var = tk.StringVar(value=mode_combos.get(store_key, ""))
+                values[key] = var
+                _add_row(body, label, var, row_i)
+                row_i += 1
+
     _bind_mousewheel(body)
 
     foot = tk.Frame(root, bg=theme["bg"])
@@ -380,6 +436,7 @@ def open_hotkey_panel(parent: tk.Misc, theme_mode: str) -> None:
         hotkey_engine.cancel_capture()
         targets_out = {}
         scenes_out = {}
+        modes_out = {}
         for k, v in values.items():
             if k in ("flyout", "settings"):
                 continue
@@ -389,11 +446,19 @@ def open_hotkey_panel(parent: tk.Misc, theme_mode: str) -> None:
             sid = hotkey_engine.parse_scene_key(k)
             if sid is not None:
                 scenes_out[sid] = combo
-            else:
-                targets_out[k] = combo
+                continue
+            mode_pair = hotkey_engine.parse_mode_key(k)
+            if mode_pair is not None:
+                did, pid = mode_pair
+                modes_out[f"{did}:{pid}"] = combo
+                continue
+            targets_out[k] = combo
         merged = dict(targets_out)
         for sid, combo in scenes_out.items():
             merged[hotkey_engine.scene_key(sid)] = combo
+        for mk, combo in modes_out.items():
+            did, pid = mk.rsplit(":", 1)
+            merged[hotkey_engine.mode_key(did, pid)] = combo
         prev_shared = list(hk.get("shared") or [])
         pending = hotkey_engine.new_conflicts(merged, prev_shared)
         if pending:
@@ -405,6 +470,7 @@ def open_hotkey_panel(parent: tk.Misc, theme_mode: str) -> None:
             settings=values["settings"].get(),
             targets=targets_out,
             scenes=scenes_out,
+            modes=modes_out,
             shared=shared,
         )
         win.destroy()

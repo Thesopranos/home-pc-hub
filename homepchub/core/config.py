@@ -19,6 +19,7 @@ DEFAULTS = {
         "settings": "",
         "targets": {},
         "scenes": {},
+        "modes": {},
         "shared": [],
     },
     "scenes": [],
