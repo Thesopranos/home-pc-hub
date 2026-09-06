@@ -268,6 +268,15 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
             if not pid:
                 return
             step["preset_id"] = pid
+        for existing in draft_steps:
+            if (
+                existing.get("device_id") == step["device_id"]
+                and existing.get("socket") == step.get("socket")
+                and existing.get("action") == step["action"]
+                and existing.get("preset_id") == step.get("preset_id")
+            ):
+                messagebox.showinfo(t("scene.title"), t("scene.duplicate_step"), parent=win)
+                return
         draft_steps.append(step)
         refresh_steps_view()
 
