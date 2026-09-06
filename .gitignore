@@ -14,3 +14,6 @@ _wire_preset.py
 _*.py
 !homepchub/**/*.py
 scripts/
+.cursor/
+.githooks/
+
