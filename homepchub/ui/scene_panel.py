@@ -129,6 +129,7 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
         borderwidth=0,
         highlightthickness=0,
         cursor="hand2",
+        exportselection=False,
     )
     steps_list.grid(row=4, column=0, sticky="ew", pady=(6, 0))
     tk.Label(
@@ -508,8 +509,19 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
         refresh_steps_view()
         steps_list.selection_clear(0, "end")
 
-    act_btns = tk.Frame(form, bg=theme["surface"])
-    act_btns.grid(row=7, column=0, sticky="w", pady=(6, 0))
+    def _keep_step_selection(_e=None) -> None:
+        idx = editing.get("index")
+        if idx is None or idx < 0 or idx >= len(draft_steps):
+            return
+        steps_list.selection_clear(0, "end")
+        steps_list.selection_set(idx)
+        steps_list.activate(idx)
+
+    target_combo.bind("<<ComboboxSelected>>", lambda e: (sync_action_choices(e), _keep_step_selection()))
+    action_combo.bind("<<ComboboxSelected>>", lambda e: (sync_mode_visibility(e), _keep_step_selection()))
+    mode_combo.bind("<<ComboboxSelected>>", _keep_step_selection)
+    for w in (target_combo, action_combo, mode_combo, wait_entry):
+        w.bind("<FocusIn>", _keep_step_selection, add="+")
     ttk.Button(
         act_btns, text=t("scene.add_step"), style="TButton", command=on_add_step
     ).pack(side="left")
