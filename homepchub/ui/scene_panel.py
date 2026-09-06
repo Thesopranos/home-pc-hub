@@ -15,7 +15,9 @@ from homepchub.ui.theme import FONTS, apply_ttk, get_theme
 from homepchub.ui.winchrome import dress_window
 
 
-def _action_label(action: str, preset_id: str | None = None) -> str:
+def _action_label(action: str, preset_id: str | None = None, ms: int | None = None) -> str:
+    if action == scene_store.ACTION_WAIT:
+        return t("scene.wait_label", ms=int(ms or 0))
     if action == scene_store.ACTION_APPLY_MODE:
         mode = bulb_presets.preset_label(preset_id) if preset_id else "?"
         return f"{t('preset.action.apply_mode')}: {mode}"
@@ -135,16 +137,23 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
     add_row.columnconfigure(1, weight=2)
     add_row.columnconfigure(2, weight=2)
 
-    targets = preset_store.iter_action_targets()
+    wait_target = {
+        "kind": "wait",
+        "label": t("scene.wait_target"),
+        "key": "__wait__",
+        "device_id": None,
+        "socket": None,
+    }
+    targets = [wait_target] + preset_store.iter_action_targets()
     target_by_label = {tgt["label"]: tgt for tgt in targets}
     target_var = tk.StringVar(
-        value=targets[0]["label"] if targets else t("preset.editor.no_devices")
+        value=targets[1]["label"] if len(targets) > 1 else wait_target["label"]
     )
     target_combo = ttk.Combobox(
         add_row,
         textvariable=target_var,
         values=[tgt["label"] for tgt in targets],
-        state="readonly" if targets else "disabled",
+        state="readonly",
         width=28,
     )
     target_combo.grid(row=0, column=0, sticky="ew", padx=(0, 10))
@@ -166,7 +175,14 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
         state="readonly" if mode_labels else "disabled",
         width=16,
     )
-    # Shown only for bulbs with "apply mode" — see sync_mode_visibility
+
+    wait_ms_var = tk.StringVar(value="500")
+    wait_wrap = tk.Frame(add_row, bg=theme["surface"])
+    ttk.Label(wait_wrap, text=t("scene.wait_ms"), style="Surface.TLabel").pack(
+        side="left", padx=(0, 6)
+    )
+    wait_entry = ttk.Entry(wait_wrap, textvariable=wait_ms_var, width=10, font=FONTS["ui"])
+    wait_entry.pack(side="left")
 
     selected: dict[str, str | None] = {"id": None}
     draft_steps: list[dict] = []
@@ -175,10 +191,20 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
     def sync_action_choices(_e=None) -> None:
         tgt = target_by_label.get(target_var.get())
         if not tgt:
-            action_combo.configure(values=[])
+            action_combo.configure(values=[], state="disabled")
             action_var.set("")
-            mode_combo.configure(state="disabled")
+            mode_combo.grid_remove()
+            wait_wrap.grid_remove()
             return
+        if tgt["kind"] == "wait":
+            action_combo.grid_remove()
+            mode_combo.grid_remove()
+            action_combo._keys = []  # type: ignore[attr-defined]
+            wait_wrap.grid(row=0, column=1, columnspan=2, sticky="w")
+            return
+        wait_wrap.grid_remove()
+        action_combo.grid(row=0, column=1, sticky="ew", padx=(0, 10))
+        action_combo.configure(state="readonly")
         if tgt["kind"] == "bulb":
             choices = [
                 t("preset.action.apply_mode"),
@@ -211,7 +237,10 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
 
     def sync_mode_visibility(_e=None) -> None:
         tgt = target_by_label.get(target_var.get())
-        is_bulb = tgt is not None and tgt.get("kind") == "bulb" and bool(mode_labels)
+        if tgt is None or tgt.get("kind") == "wait":
+            mode_combo.grid_remove()
+            return
+        is_bulb = tgt.get("kind") == "bulb" and bool(mode_labels)
         if not is_bulb:
             mode_combo.grid_remove()
             return
@@ -223,8 +252,6 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
             action = keys[idx]
         except (ValueError, IndexError):
             action = None
-        # Keep the mode field visible for bulbs so the row doesn't jump when
-        # switching action; only enable it for apply_mode.
         if action == scene_store.ACTION_APPLY_MODE:
             mode_combo.configure(state="readonly")
         else:
@@ -238,7 +265,14 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
         steps_list.delete(0, "end")
         label_by_key = {tgt["key"]: tgt["label"] for tgt in targets}
         for step in draft_steps:
-            key = f"{step['device_id']}:{'' if step.get('socket') is None else step['socket']}"
+            if step.get("action") == scene_store.ACTION_WAIT:
+                steps_list.insert(
+                    "end",
+                    _action_label(scene_store.ACTION_WAIT, ms=step.get("ms")),
+                )
+                continue
+            sock = step.get("socket")
+            key = f"{step['device_id']}:{'' if sock is None else sock}"
             dev = label_by_key.get(key, step["device_id"])
             steps_list.insert(
                 "end",
@@ -249,34 +283,56 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
         tgt = target_by_label.get(target_var.get())
         if not tgt:
             return
-        keys = getattr(action_combo, "_keys", [])
-        choices = list(action_combo.cget("values") or [])
-        try:
-            idx = choices.index(action_var.get())
-            action = keys[idx]
-        except (ValueError, IndexError):
-            return
-        step = {
-            "device_id": tgt["device_id"],
-            "socket": tgt["socket"],
-            "action": action,
-        }
-        if action == scene_store.ACTION_APPLY_MODE:
-            if tgt["kind"] != "bulb":
+        if tgt["kind"] == "wait":
+            try:
+                ms = int((wait_ms_var.get() or "").strip())
+            except ValueError:
+                messagebox.showerror(t("scene.title"), t("scene.wait_invalid"), parent=win)
                 return
-            pid = mode_by_label.get(mode_var.get())
-            if not pid:
+            if ms < 0 or ms > 600_000:
+                messagebox.showerror(t("scene.title"), t("scene.wait_invalid"), parent=win)
                 return
-            step["preset_id"] = pid
-        for existing in draft_steps:
+            step = {"action": scene_store.ACTION_WAIT, "ms": ms}
+        else:
+            keys = getattr(action_combo, "_keys", [])
+            choices = list(action_combo.cget("values") or [])
+            try:
+                idx = choices.index(action_var.get())
+                action = keys[idx]
+            except (ValueError, IndexError):
+                return
+            step = {
+                "device_id": tgt["device_id"],
+                "socket": tgt["socket"],
+                "action": action,
+            }
+            if action == scene_store.ACTION_APPLY_MODE:
+                if tgt["kind"] != "bulb":
+                    return
+                pid = mode_by_label.get(mode_var.get())
+                if not pid:
+                    return
+                step["preset_id"] = pid
+        if step.get("action") == scene_store.ACTION_WAIT:
             if (
-                existing.get("device_id") == step["device_id"]
-                and existing.get("socket") == step.get("socket")
-                and existing.get("action") == step["action"]
-                and existing.get("preset_id") == step.get("preset_id")
+                draft_steps
+                and draft_steps[-1].get("action") == scene_store.ACTION_WAIT
+                and draft_steps[-1].get("ms") == step.get("ms")
             ):
                 messagebox.showinfo(t("scene.title"), t("scene.duplicate_step"), parent=win)
                 return
+        else:
+            for existing in draft_steps:
+                if (
+                    existing.get("device_id") == step.get("device_id")
+                    and existing.get("socket") == step.get("socket")
+                    and existing.get("action") == step.get("action")
+                    and existing.get("preset_id") == step.get("preset_id")
+                ):
+                    messagebox.showinfo(
+                        t("scene.title"), t("scene.duplicate_step"), parent=win
+                    )
+                    return
         draft_steps.append(step)
         refresh_steps_view()
 

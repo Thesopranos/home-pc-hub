@@ -1,7 +1,8 @@
-"""Named scenes: ordered device steps (ambient / on / off / toggle)."""
+"""Named scenes: ordered device steps (ambient / on / off / toggle / wait)."""
 
 from __future__ import annotations
 
+import time
 import uuid
 
 from homepchub.core.config import load_config, save_config
@@ -11,13 +12,24 @@ ACTION_APPLY_MODE = preset_store.ACTION_APPLY_MODE
 ACTION_ON = preset_store.ACTION_ON
 ACTION_OFF = preset_store.ACTION_OFF
 ACTION_TOGGLE = preset_store.ACTION_TOGGLE
+ACTION_WAIT = "wait"
+
+_MAX_WAIT_MS = 600_000  # 10 minutes
 
 
 def _clean_step(raw: dict) -> dict | None:
     if not isinstance(raw, dict):
         return None
-    device_id = raw.get("device_id")
     action = raw.get("action")
+    if action == ACTION_WAIT:
+        try:
+            ms = int(raw.get("ms", 0))
+        except (TypeError, ValueError):
+            return None
+        ms = max(0, min(_MAX_WAIT_MS, ms))
+        return {"action": ACTION_WAIT, "ms": ms}
+
+    device_id = raw.get("device_id")
     if not device_id or action not in (
         ACTION_APPLY_MODE,
         ACTION_ON,
@@ -123,14 +135,23 @@ def apply_scene(scene_id: str) -> None:
         raise KeyError(scene_id)
     by_id = {d["id"]: d for d in (load_config().get("devices") or []) if d.get("id")}
     for step in scene["steps"]:
-        device = by_id.get(step["device_id"])
+        action = step.get("action")
+        if action == ACTION_WAIT:
+            try:
+                ms = max(0, min(_MAX_WAIT_MS, int(step.get("ms", 0))))
+            except (TypeError, ValueError):
+                ms = 0
+            if ms > 0:
+                time.sleep(ms / 1000.0)
+            continue
+
+        device = by_id.get(step.get("device_id"))
         if not device:
             continue
         host = device.get("host")
         if not host:
             continue
         socket = step.get("socket")
-        action = step.get("action")
         try:
             if action == ACTION_APPLY_MODE:
                 apply_preset(
