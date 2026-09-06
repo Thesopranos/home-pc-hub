@@ -289,8 +289,31 @@ def open_flyout(root: tk.Tk, *, on_open_full=None) -> None:
     y = root.winfo_screenheight() - height - 56
     win.geometry(f"+{x}+{y}")
 
+    def _flyout_still_focused() -> bool:
+        """True if focus is still on the flyout (or its Combobox popdown).
+
+        ttk.Combobox on Windows reports focus as a transient ``popdown`` path;
+        ``focus_get()`` then raises KeyError — treat that as still open.
+        """
+        try:
+            focused = win.focus_get()
+        except (KeyError, tk.TclError):
+            return True
+        if focused is None:
+            return False
+        try:
+            return str(focused).startswith(str(win))
+        except tk.TclError:
+            return True
+
     def maybe_close(_event=None):
-        win.after(80, lambda: win.focus_get() is None and close_flyout())
+        def check():
+            if not win.winfo_exists():
+                return
+            if not _flyout_still_focused():
+                close_flyout()
+
+        win.after(80, check)
 
     win.bind("<FocusOut>", maybe_close)
     win.focus_force()
