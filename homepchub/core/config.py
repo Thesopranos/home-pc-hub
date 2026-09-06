@@ -14,6 +14,11 @@ DEFAULTS = {
     "screen_sync_monitor": 0,
     "screen_sync_boost": 10,
     "presets": {"overrides": {}, "custom": [], "actions": {}},
+    "hotkeys": {
+        "flyout": "ctrl+shift+h",
+        "settings": "",
+        "targets": {},
+    },
 }
 
 

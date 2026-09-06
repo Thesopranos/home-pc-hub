@@ -8,6 +8,7 @@ import pystray
 from homepchub.assets import tray_image
 from homepchub.core.config import ensure_credentials, get_theme_mode
 from homepchub.core.devices import set_credentials
+from homepchub.core import hotkeys as hotkey_engine
 from homepchub.core.scheduler import start as start_scheduler
 from homepchub.i18n import t
 from homepchub.ui.flyout import close_flyout, open_flyout
@@ -97,6 +98,13 @@ def main():
         ),
     )
     threading.Thread(target=icon.run, daemon=True).start()
+
+    hotkey_engine.set_actions(
+        on_flyout=lambda: root.after(0, confirm_single_click),
+        on_settings=lambda: root.after(0, show_full),
+    )
+    hotkey_engine.reload()
+
     root.mainloop()
     _ = main_win
 

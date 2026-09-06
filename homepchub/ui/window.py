@@ -22,6 +22,7 @@ from homepchub.ui.theme import FONTS, apply_ttk, get_theme
 from homepchub.ui.tooltip import attach_info_icon, labeled_row
 from homepchub.ui.layout import ThemedVScrollbar, size_window
 from homepchub.ui.preset_editor import open_preset_editor
+from homepchub.ui.hotkey_panel import open_hotkey_panel
 from homepchub.ui.winchrome import dress_window
 
 STATUS_POLL_MS = 5000
@@ -444,6 +445,14 @@ class MainWindow:
         for child in self.menubar.winfo_children():
             child.destroy()
         self._menu_btns.clear()
+        hotkey_btn = ttk.Button(
+            self.menubar,
+            text=t("menu.hotkeys"),
+            style="Ghost.TButton",
+            command=lambda: open_hotkey_panel(self.root, self.mode),
+        )
+        hotkey_btn.pack(side="left")
+        self._menu_btns["hotkeys"] = hotkey_btn
         if self._has_bulb():
             btn = ttk.Button(
                 self.menubar,
@@ -451,7 +460,7 @@ class MainWindow:
                 style="Ghost.TButton",
                 command=self._open_bulb_menu,
             )
-            btn.pack(side="left")
+            btn.pack(side="left", padx=(8, 0))
             self._menu_btns["bulb"] = btn
 
     def _open_bulb_menu(self) -> None:

@@ -1,3 +1,4 @@
+keyboard
 python-kasa
 pystray
 Pillow

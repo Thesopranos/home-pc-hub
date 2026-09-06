@@ -86,6 +86,7 @@ From a plug/outlet feature panel, **Schedule…** opens the schedule editor (tim
 - **Double-click** → full settings window.
 - Menu: settings, quick panel, exit.
 - Tray icon and window icon use the Home PC Hub brand mark.
+- **Global shortcuts** (header **Shortcuts…**): click a row and **press** the combo (keyboard capture; Esc cancels). Default flyout shortcut `ctrl+shift+h`. Bind toggles per device/outlet. Needs the `keyboard` package; works while the app is running.
 
 #### Device discovery & list
 
@@ -166,9 +167,9 @@ Theme-colored tab chrome (no bright system notebook border). Stored in local con
 ```
 homepchub/
   assets/     tray/app icons, logos (brand pack subset)
-  core/       config, devices (python-kasa), scheduler, ambient presets (+ store for overrides/customs/actions)
+  core/       config, devices (python-kasa), scheduler, global hotkeys, ambient presets (+ store for overrides/customs/actions)
   i18n/       TR/EN strings and feature labels
-  ui/         tray, window, flyout, bulb/plug/schedule/preset-editor panels, theme, title-bar chrome
+  ui/         tray, window, flyout, bulb/plug/schedule/preset-editor/hotkey panels, theme, title-bar chrome
 tray_app.py   thin entry (same as python -m homepchub)
 ```
 
@@ -251,6 +252,7 @@ Priz/soket özellik panelindeki **Zamanlama…**, zamanlı kurallar + açık/kap
 - **Çift tık** → tam ayar penceresi.
 - Menü: ayarlar, hızlı panel, çıkış.
 - Tepsi ve pencere ikonu marka amblemini kullanır.
+- **Global kısayollar** (başlıkta **Kısayollar…**): satıra tıkla, kombinasyonu **bas** (klavye yakalama; Esc iptal). Varsayılan flyout: `ctrl+shift+h`. Cihaz/soket başına aç-kapa. `keyboard` paketi gerekir; uygulama açıkken çalışır.
 
 #### Cihaz bulma ve liste
 
