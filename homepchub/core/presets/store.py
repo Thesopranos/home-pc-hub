@@ -208,7 +208,7 @@ def iter_action_targets() -> list[dict]:
                         "host": host,
                         "socket": idx,
                         "kind": "plug",
-                        "label": f"{name} — {sock_name}",
+                        "label": f"{name} - {sock_name}",
                         "key": f"{did}:{idx}",
                     }
                 )

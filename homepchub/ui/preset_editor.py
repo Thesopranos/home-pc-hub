@@ -294,8 +294,8 @@ def open_preset_editor(parent: tk.Misc, theme_mode: str) -> None:
             else:
                 name_entry.configure(state="disabled")
         else:
-            kelvin_var.set("—")
-            bright_var.set("—")
+            kelvin_var.set("-")
+            bright_var.set("-")
             set_light_fields_enabled(False)
             name_entry.configure(state="disabled")
         draft_actions = preset_store.get_actions(pid)

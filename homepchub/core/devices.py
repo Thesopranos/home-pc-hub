@@ -213,7 +213,7 @@ def run(host: str, action, *, needs_update: bool = False):
 
 
 def scan(timeout: int = 5) -> list[dict]:
-    """Discover LAN devices. Retries across interfaces — UDP drops are common."""
+    """Discover LAN devices. Retries across interfaces - UDP drops are common."""
     creds = _ensure_creds()
 
     async def _scan():
@@ -415,7 +415,7 @@ def set_light_color_temp(host: str, temp: int, brightness: int | None = None) ->
     run(host, _set)
 
 
-# Power / energy / LED etc. — strip energy is usually per-socket (child);
+# Power / energy / LED etc. - strip energy is usually per-socket (child);
 # LED and similar often live on the parent device.
 _SKIP_FEATURE_IDS = {
     "state",  # already controlled by main toggles

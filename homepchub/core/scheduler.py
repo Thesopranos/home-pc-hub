@@ -1,4 +1,4 @@
-"""Local socket/device schedules — daily…yearly + on/off loops.
+"""Local socket/device schedules - daily…yearly + on/off loops.
 
 # ponytail: ~20s poll (not second-precise). Use OS task scheduler if you need exact second timing.
 """
@@ -215,7 +215,7 @@ def demo():
         "enabled": True,
         "kind": "weekly",
         "time": "08:30",
-        "weekdays": [6],  # Sunday — 2026-03-15 is Sunday
+        "weekdays": [6],  # Sunday - 2026-03-15 is Sunday
         "action": "off",
     }
     assert evaluate_rule(weekly, now) is False

@@ -1,4 +1,4 @@
-"""Circadian ambient — Kelvin/brightness follow local time of day."""
+"""Circadian ambient - Kelvin/brightness follow local time of day."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import time
 from homepchub.core.devices import set_light_brightness, set_light_color_temp, set_power
 from homepchub.core.presets.base import register
 
-# (hour, kelvin, brightness) — same curve as Home Hub
+# (hour, kelvin, brightness) - same curve as Home Hub
 KEYFRAMES = [
     (0, 2500, 5),
     (6, 2500, 15),

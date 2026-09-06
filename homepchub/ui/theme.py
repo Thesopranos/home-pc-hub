@@ -1,4 +1,4 @@
-"""UI theme tokens for Home Pc Hub — aligned with brand.json palette."""
+"""UI theme tokens for Home Pc Hub - aligned with brand.json palette."""
 
 from __future__ import annotations
 
@@ -287,7 +287,7 @@ def apply_ttk(style: ttk.Style, theme: dict) -> None:
         selectforeground=[("readonly", theme["text"])],
     )
 
-    # Dropdown list (popdown) — not covered by TCombobox alone
+    # Dropdown list (popdown) - not covered by TCombobox alone
     master = getattr(style, "master", None)
     if master is not None:
         master.option_add("*TCombobox*Listbox.background", theme["surface_2"])

@@ -1,4 +1,4 @@
-"""Compact tray flyout — quick power toggles (Home Hub-style single click)."""
+"""Compact tray flyout - quick power toggles (Home Hub-style single click)."""
 
 from __future__ import annotations
 
@@ -327,7 +327,7 @@ def open_flyout(root: tk.Tk, *, on_open_full=None) -> None:
         """True if focus is still on the flyout (or its Combobox popdown).
 
         ttk.Combobox on Windows reports focus as a transient ``popdown`` path;
-        ``focus_get()`` then raises KeyError — treat that as still open.
+        ``focus_get()`` then raises KeyError - treat that as still open.
         """
         try:
             focused = win.focus_get()

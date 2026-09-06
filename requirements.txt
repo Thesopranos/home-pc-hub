@@ -2,3 +2,4 @@ keyboard
 python-kasa
 pystray
 Pillow
+winsdk

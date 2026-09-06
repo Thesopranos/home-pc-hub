@@ -1,4 +1,4 @@
-"""Window sizing helpers — keep dialogs on-screen with usable chrome."""
+"""Window sizing helpers - keep dialogs on-screen with usable chrome."""
 
 from __future__ import annotations
 

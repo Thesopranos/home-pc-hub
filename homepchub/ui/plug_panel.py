@@ -1,4 +1,4 @@
-"""Plug / strip feature panel — device-level or per-socket (child)."""
+"""Plug / strip feature panel - device-level or per-socket (child)."""
 
 from __future__ import annotations
 
@@ -43,7 +43,7 @@ def open_plug_panel(
                 break
         if sock_name is None:
             sock_name = t("status.socket_label", n=socket + 1)
-        title = f"{base} — {sock_name}"
+        title = f"{base} - {sock_name}"
         scope_hint = t("plug.scope_socket")
         current_name = sock_name
     elif device.get("kind") == "bulb" or device.get("has_light"):
@@ -142,7 +142,7 @@ def open_plug_panel(
                         title_lbl.configure(text=cleaned)
                         win.title(t("plug.title", name=cleaned))
                     else:
-                        new_title = f"{device.get('alias') or device['host']} — {cleaned}"
+                        new_title = f"{device.get('alias') or device['host']} - {cleaned}"
                         title_lbl.configure(text=new_title)
                         win.title(t("plug.title", name=new_title))
                     status.set(t("plug.name_saved"))

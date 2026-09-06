@@ -1,6 +1,6 @@
 # Home Pc Hub
 
-Windows system tray app for TP-Link Tapo plugs, power strips, and bulbs — discover on your LAN, save a free-form device list, and control everything locally.
+Windows system tray app for TP-Link Tapo plugs, power strips, and bulbs - discover on your LAN, save a free-form device list, and control everything locally.
 
 | Language | Jump |
 |----------|------|
@@ -9,7 +9,7 @@ Windows system tray app for TP-Link Tapo plugs, power strips, and bulbs — disc
 
 **Local-only control** via [python-kasa](https://github.com/python-kasa/python-kasa). Your Tapo account authenticates devices on your network; credentials and settings stay on this PC (`%APPDATA%\HomePcHub\`).
 
-Unofficial client — not affiliated with TP-Link.
+Unofficial client - not affiliated with TP-Link.
 
 ---
 
@@ -19,23 +19,35 @@ Unofficial client — not affiliated with TP-Link.
 
 ### What it is
 
-Home Pc Hub runs in the Windows tray. You scan for Tapo devices, build your own list, toggle power quickly from a flyout, and open detailed panels for lights, plugs, and schedules.
+Home Pc Hub runs in the Windows tray. You scan for Tapo devices, build your own list, toggle power quickly from a flyout, open detailed panels for lights, plugs, and schedules, and use **Automation** for shortcuts, scenes, and notification-driven rules.
 
 ### Screenshots
 
-**Full settings** — device list, **Bulb ▾** mini menu under the title, language & theme, LAN scan (Scan / Add selected always visible):
+**Full settings** - device list, **Bulb ▾** mini menu under the title, language & theme, LAN scan (Scan / Add selected always visible):
 
 ![Full settings window with Bulb menu](screenshots/en/main.png)
 
-**Edit ambient modes** — open via **Bulb ▾ → Edit ambient modes…**: Kelvin/brightness, custom modes, and **linked actions** (other bulb same mode / plug on-off):
+**Edit ambient modes** - open via **Bulb ▾ → Edit ambient modes…**: Kelvin/brightness, custom modes, and **linked actions** (other bulb same mode / plug on-off):
 
 ![Ambient mode editor](screenshots/en/ambient-editor.png)
 
-**Schedule** — from plug/outlet **··· → Schedule…**: timed tab with aligned Type / Time / Action fields and themed tabs:
+**Schedule** - from plug/outlet **··· → Schedule…**: timed tab with aligned Type / Time / Action fields and themed tabs:
 
 ![Schedule panel](screenshots/en/schedule.png)
 
-**Tray flyout** — single-click tray: separators between outlets/devices, ambient **dropdown** + **(i)** tip:
+**Shortcuts** - **Automation ▾ → Shortcuts…**: click a row and press the combo:
+
+![Global shortcuts panel](screenshots/en/shortcuts.png)
+
+**Scenes** - **Automation ▾ → Scenes…**: ordered multi-device steps + wait:
+
+![Scenes editor](screenshots/en/scenes.png)
+
+**Notifications** - **Automation ▾ → Notifications…**: toast rules with app filter and device steps:
+
+![Notifications editor](screenshots/en/notifications.png)
+
+**Tray flyout** - single-click tray: separators between outlets/devices, ambient **dropdown** + **(i)** tip:
 
 ![Tray flyout](screenshots/en/flyout.png)
 
@@ -46,6 +58,7 @@ Home Pc Hub runs in the Windows tray. You scan for Tapo devices, build your own 
 - Windows
 - Python 3.11+
 - Devices already set up in the official Tapo app (same account)
+- Optional packages from `requirements.txt`: `keyboard` (global shortcuts), `winsdk` (Windows toast → device rules). Grant **notification access** in Windows Settings if you use Notifications.
 
 ### Setup
 
@@ -57,20 +70,22 @@ python -m venv .venv
 
 Or: `.venv\Scripts\python tray_app.py`
 
-First launch asks for Tapo email/password. Saved under `%APPDATA%\HomePcHub\config.json` (never committed) with devices, theme, language, schedules, and aliases.
+First launch asks for Tapo email/password. Saved under `%APPDATA%\HomePcHub\config.json` (never committed) with devices, theme, language, schedules, scenes, hotkeys, notification rules, and aliases.
+
+Only **one** tray instance should run (a single-instance lock prevents a second copy from starting).
 
 ---
 
 ### The “···” button (more / details)
 
-In the device list, **···** is the **details** button next to a device or outlet. It is not an ellipsis for truncated text — it opens a panel with everything beyond a simple on/off switch.
+In the device list, **···** is the **details** button next to a device or outlet. It is not an ellipsis for truncated text - it opens a panel with everything beyond a simple on/off switch.
 
 | Where you click **···** | What opens |
 |-------------------------|------------|
-| **Bulb** row | **Light panel** — rename, power, ambient modes, brightness, color temperature (K), color wheel / HSV |
-| **Single plug** row | **Feature panel** — rename, energy and other reported features, **Schedule…** |
-| **Power strip header** | **Device-level feature panel** — strip-wide options (e.g. LED), not one outlet |
-| **One outlet** on a strip | **Outlet feature panel** — that socket’s features + **Schedule…** for that outlet |
+| **Bulb** row | **Light panel** - rename, power, ambient modes, brightness, color temperature (K), color wheel / HSV |
+| **Single plug** row | **Feature panel** - rename, energy and other reported features, **Schedule…** |
+| **Power strip header** | **Device-level feature panel** - strip-wide options (e.g. LED), not one outlet |
+| **One outlet** on a strip | **Outlet feature panel** - that socket’s features + **Schedule…** for that outlet |
 | Inside the **light panel** (top-right **···**) | **Device details** for the bulb (signal, firmware, connection info, etc.) |
 
 From a plug/outlet feature panel, **Schedule…** opens the schedule editor (timed rules + on/off loop).
@@ -86,8 +101,33 @@ From a plug/outlet feature panel, **Schedule…** opens the schedule editor (tim
 - **Double-click** → full settings window.
 - Menu: settings, quick panel, exit.
 - Tray icon and window icon use the Home PC Hub brand mark.
-- **Global shortcuts** (header **Automation ▾ → Shortcuts…**): click a row and **press** the combo (keyboard capture; Esc cancels). Default flyout shortcut `ctrl+shift+h`. Bind toggles per device/outlet. Needs the `keyboard` package; works while the app is running.
-- **Scenes** (**Automation ▾ → Scenes…**): named one-tap recipes (e.g. bulb → Work + strip outlet on). Shown as quick buttons on the tray flyout; steps run in order.
+#### Automation (header **Automation ▾**)
+
+Three editors live under the title bar menu:
+
+| Menu | Opens |
+|------|--------|
+| **Shortcuts…** | Global hotkeys |
+| **Scenes…** | Named multi-device recipes |
+| **Notifications…** | Rules that run when a Windows toast arrives |
+
+##### Shortcuts…
+
+- Click a row, then **press** the key combo (Esc cancels). Works system-wide while the app is running (`keyboard` package).
+- Sections: **App** (quick panel / settings window), **Devices (toggle)**, **Scenes**, **Bulb ambient modes**.
+- Default flyout shortcut: `ctrl+shift+h`.
+- Same combo on several devices/outlets → conflict dialog: **Cancel** or **Share** (run each target’s own toggle in order).
+
+##### Scenes…
+
+- Named one-tap recipes (e.g. desk: bulb → Work + strip on). Buttons appear on the tray flyout.
+- Ordered **steps**: ambient mode / on / off / toggle, plus optional **wait (ms)**. Drag to reorder; click a step → edit fields → **Update step** (or **Add step** for a new one). Consecutive duplicate device steps are blocked (waits ignored).
+
+##### Notifications…
+
+- When a Windows toast arrives, run device steps (needs `winsdk` + Windows notification access).
+- Toggle **Enable notification automation**; each **rule** has a name, optional **Apps** filter (empty = all toasts; comma-separated partial display names, e.g. `WhatsApp, Gmail`), and ordered steps.
+- Steps (like scenes): **Color (HSV)**, wait, on/off/toggle, ambient mode, **Restore previous** (snapshot before mutate, then restore). **Try** runs the saved rule once without waiting for a toast.
 
 #### Device discovery & list
 
@@ -141,7 +181,7 @@ Open **Schedule…** from a plug/outlet feature panel. The app must be running f
 
 | Tab | What it does |
 |-----|----------------|
-| **Timed** | Once / daily / weekly / monthly / yearly at a clock time — **on / off / toggle**. Extra fields (date, weekdays, day of month, …) appear only for the selected kind; labels and inputs stay aligned. |
+| **Timed** | Once / daily / weekly / monthly / yearly at a clock time - **on / off / toggle**. Extra fields (date, weekdays, day of month, …) appear only for the selected kind; labels and inputs stay aligned. |
 | **On/off loop** | Repeat: N minutes on, M minutes off |
 
 Theme-colored tab chrome (no bright system notebook border). Stored in local config; polled about every **~20 seconds** (not second-precise).
@@ -168,15 +208,15 @@ Theme-colored tab chrome (no bright system notebook border). Stored in local con
 ```
 homepchub/
   assets/     tray/app icons, logos (brand pack subset)
-  core/       config, devices (python-kasa), scheduler, global hotkeys, ambient presets (+ store for overrides/customs/actions)
+  core/       config, devices (python-kasa), scheduler, hotkeys, scenes, notifications, ambient presets (+ store)
   i18n/       TR/EN strings and feature labels
-  ui/         tray, window, flyout, bulb/plug/schedule/preset-editor/hotkey panels, theme, title-bar chrome
+  ui/         tray, window, flyout, bulb/plug/schedule/preset/hotkey/scene/notify panels, theme, chrome
 tray_app.py   thin entry (same as python -m homepchub)
 ```
 
 ### License
 
-MIT — see [LICENSE](LICENSE).
+MIT - see [LICENSE](LICENSE).
 
 ---
 
@@ -186,23 +226,35 @@ MIT — see [LICENSE](LICENSE).
 
 ### Nedir?
 
-Home Pc Hub, Windows tepsi uygulamasıdır. Tapo cihazlarını ağda bulur, kendi listeni oluşturursun; flyout’tan hızlı aç-kapa, ayar penceresinden ışık / priz / zamanlama detaylarını yönetirsin.
+Home Pc Hub, Windows tepsi uygulamasıdır. Tapo cihazlarını ağda bulur, kendi listeni oluşturursun; flyout’tan hızlı aç-kapa, ayar penceresinden ışık / priz / zamanlama detaylarını yönetirsin. **Otomasyon** ile kısayol, sahne ve bildirim kurallarını ayarlarsın.
 
 ### Ekran görüntüleri
 
-**Tam ayarlar** — cihaz listesi, başlık altında **Ampul ▾** mini menü, dil & tema, ağ tarama (Tara / Seçilenleri ekle görünür):
+**Tam ayarlar** - cihaz listesi, başlık altında **Ampul ▾** mini menü, dil & tema, ağ tarama (Tara / Seçilenleri ekle görünür):
 
 ![Ampul menülü ana ayar penceresi](screenshots/tr/main.png)
 
-**Ortam modlarını düzenle** — **Ampul ▾ → Ortam modlarını düzenle…**: Kelvin/parlaklık, özel modlar ve **ek aksiyonlar** (başka ampul aynı moda / priz aç-kapa):
+**Ortam modlarını düzenle** - **Ampul ▾ → Ortam modlarını düzenle…**: Kelvin/parlaklık, özel modlar ve **ek aksiyonlar** (başka ampul aynı moda / priz aç-kapa):
 
 ![Ortam modu düzenleyici](screenshots/tr/ambient-editor.png)
 
-**Zamanlama** — priz/soket **··· → Zamanlama…**: hizalı Tür / Saat / İşlem alanları ve temalı sekmeler:
+**Zamanlama** - priz/soket **··· → Zamanlama…**: hizalı Tür / Saat / İşlem alanları ve temalı sekmeler:
 
 ![Zamanlama paneli](screenshots/tr/schedule.png)
 
-**Tepsi flyout** — tek tık: cihaz/soket ayırıcıları, ortam **dropdown** + **(i)** ipucu:
+**Kısayollar** - **Otomasyon ▾ → Kısayollar…**: satıra tıkla, kombinasyonu bas:
+
+![Global kısayollar paneli](screenshots/tr/shortcuts.png)
+
+**Sahneler** - **Otomasyon ▾ → Sahneler…**: sıralı çoklu cihaz adımları + bekleme:
+
+![Sahneler editörü](screenshots/tr/scenes.png)
+
+**Bildirimler** - **Otomasyon ▾ → Bildirimler…**: toast kuralları, uygulama filtresi ve cihaz adımları:
+
+![Bildirimler editörü](screenshots/tr/notifications.png)
+
+**Tepsi flyout** - tek tık: cihaz/soket ayırıcıları, ortam **dropdown** + **(i)** ipucu:
 
 ![Tepsi flyout](screenshots/tr/flyout.png)
 
@@ -213,6 +265,7 @@ Home Pc Hub, Windows tepsi uygulamasıdır. Tapo cihazlarını ağda bulur, kend
 - Windows
 - Python 3.11+
 - Resmi Tapo uygulamasında aynı hesapla kurulmuş cihazlar
+- `requirements.txt` içinden: `keyboard` (global kısayollar), `winsdk` (Windows bildirimi → cihaz kuralları). Bildirimler için Windows Ayarlar’da **bildirim erişimi** vermen gerekir.
 
 ### Kurulum
 
@@ -224,20 +277,22 @@ python -m venv .venv
 
 Alternatif: `.venv\Scripts\python tray_app.py`
 
-İlk açılışta Tapo e-posta/şifre istenir. Cihazlar, tema, dil, zamanlamalar ve isimlerle birlikte `%APPDATA%\HomePcHub\config.json` içinde saklanır (repoya girmez).
+İlk açılışta Tapo e-posta/şifre istenir. Cihazlar, tema, dil, zamanlamalar, sahneler, kısayollar, bildirim kuralları ve isimlerle birlikte `%APPDATA%\HomePcHub\config.json` içinde saklanır (repoya girmez).
+
+Aynı anda **tek** tepsi örneği çalışmalı (ikinci kopya açılmaz).
 
 ---
 
 ### “···” düğmesi nedir? (detay / daha fazla)
 
-Cihaz listesindeki **···**, metin kesme işareti değil — **detay / daha fazla** düğmesidir. Basit aç-kapadan fazlasını (ışık ayarları, özellikler, zamanlama) açar.
+Cihaz listesindeki **···**, metin kesme işareti değil - **detay / daha fazla** düğmesidir. Basit aç-kapadan fazlasını (ışık ayarları, özellikler, zamanlama) açar.
 
 | Nerede **···**’ye basarsın? | Ne açılır? |
 |-----------------------------|------------|
-| **Ampul** satırı | **Işık paneli** — yeniden adlandırma, güç, ortam modları, parlaklık, renk sıcaklığı (K), renk tekerleği / HSV |
-| **Tekli priz** satırı | **Özellik paneli** — yeniden adlandırma, enerji ve cihazın bildirdiği özellikler, **Zamanlama…** |
-| **Şerit başlığı** | **Cihaz seviyesi özellik paneli** — şeridin geneli (ör. LED); tek soket değil |
-| **Şeritteki bir soket** | **Soket özellik paneli** — o çıkışın özellikleri + o soket için **Zamanlama…** |
+| **Ampul** satırı | **Işık paneli** - yeniden adlandırma, güç, ortam modları, parlaklık, renk sıcaklığı (K), renk tekerleği / HSV |
+| **Tekli priz** satırı | **Özellik paneli** - yeniden adlandırma, enerji ve cihazın bildirdiği özellikler, **Zamanlama…** |
+| **Şerit başlığı** | **Cihaz seviyesi özellik paneli** - şeridin geneli (ör. LED); tek soket değil |
+| **Şeritteki bir soket** | **Soket özellik paneli** - o çıkışın özellikleri + o soket için **Zamanlama…** |
 | **Işık panelinin** sağ üstündeki **···** | Ampulün **cihaz detayları** (sinyal, yazılım, bağlantı vb.) |
 
 Priz/soket özellik panelindeki **Zamanlama…**, zamanlı kurallar + açık/kapalı döngü editörünü açar.
@@ -253,8 +308,33 @@ Priz/soket özellik panelindeki **Zamanlama…**, zamanlı kurallar + açık/kap
 - **Çift tık** → tam ayar penceresi.
 - Menü: ayarlar, hızlı panel, çıkış.
 - Tepsi ve pencere ikonu marka amblemini kullanır.
-- **Global kısayollar** (başlıkta **Otomasyon ▾ → Kısayollar…**): satıra tıkla, kombinasyonu **bas** (klavye yakalama; Esc iptal). Varsayılan flyout: `ctrl+shift+h`. Cihaz/soket başına aç-kapa. `keyboard` paketi gerekir; uygulama açıkken çalışır.
-- **Sahneler** (**Otomasyon ▾ → Sahneler…**): tek tıkla çoklu cihaz (örn. ampul → Çalışma + şerit açık). Flyout’ta buton olarak çıkar; adımlar sırayla çalışır.
+#### Otomasyon (başlıkta **Otomasyon ▾**)
+
+Başlık altı menüde üç editör var:
+
+| Menü | Ne açılır |
+|------|-----------|
+| **Kısayollar…** | Global kısayollar |
+| **Sahneler…** | Çoklu cihaz tarifleri |
+| **Bildirimler…** | Windows bildirimi gelince çalışan kurallar |
+
+##### Kısayollar…
+
+- Satıra tıkla, kombinasyonu **bas** (Esc iptal). Uygulama açıkken her yerde geçerli (`keyboard` paketi).
+- Bölümler: **Uygulama** (hızlı panel / ayarlar penceresi), **Cihazlar (aç/kapa)**, **Sahneler**, **Ampul ortam modları**.
+- Varsayılan flyout: `ctrl+shift+h`.
+- Aynı tuş birden fazla cihaz/sokette → **İptal** veya **Birlikte kullan** (sırayla her birinin kendi aç-kapası).
+
+##### Sahneler…
+
+- Tek tıkla çoklu cihaz (örn. masa: ampul → Çalışma + şerit açık). Flyout’ta buton olarak çıkar.
+- Sıralı **adımlar**: ortam modu / aç / kapa / değiştir + isteğe bağlı **bekleme (ms)**. Sürükleyerek sırala; adıma tıkla → alanları düzenle → **Adımı güncelle** (yeni için **Adım ekle**). Peş peşe aynı cihaz adımı eklenemez (beklemeler yok sayılır).
+
+##### Bildirimler…
+
+- Windows toast gelince cihaz adımlarını çalıştırır (`winsdk` + Windows bildirim erişimi gerekir).
+- **Bildirim otomasyonunu aç**; her **kural**da ad, isteğe bağlı **Uygulamalar** filtresi (boş = tüm bildirimler; virgülle kısmi görünen ad, örn. `WhatsApp, Gmail`) ve sıralı adımlar.
+- Adımlar (sahneler gibi): **Renk (HSV)**, bekleme, aç/kapa, ortam modu, **Eski haline dön**. **Dene** kayıtlı kuralı bildirim beklemeden bir kez uygular.
 
 #### Cihaz bulma ve liste
 
@@ -308,7 +388,7 @@ Priz/soket özellik panelinden **Zamanlama…**. Kuralların çalışması için
 
 | Sekme | Ne yapar? |
 |-------|-----------|
-| **Zamanlama** | Tek sefer / günlük / haftalık / aylık / yıllık — saatte — **aç / kapat / değiştir**. Tür’e göre ek alanlar (tarih, günler, ayın günü…) gösterilir; etiket ve inputlar hizalıdır. |
+| **Zamanlama** | Tek sefer / günlük / haftalık / aylık / yıllık - saatte - **aç / kapat / değiştir**. Tür’e göre ek alanlar (tarih, günler, ayın günü…) gösterilir; etiket ve inputlar hizalıdır. |
 | **Açık/kapalı döngü** | Tekrar: N dk açık, M dk kapalı |
 
 Sekme çerçevesi temaya uygun renktedir (parlak sistem Notebook kenarlığı yok). Yerel config’te tutulur; yaklaşık **~20 saniyede bir** kontrol edilir (saniye hassasiyeti yok).
@@ -316,7 +396,7 @@ Sekme çerçevesi temaya uygun renktedir (parlak sistem Notebook kenarlığı yo
 #### Dil, tema, pencere çubuğu
 
 - Arayüz **Türkçe** veya **English** (kaydedilir).
-- **Açık / koyu** tema, marka renklerine uyumlu (kaydedilir). Açık temada buton/input zeminleri daha koyu — beyaz paneller üzerinde net ayrılır.
+- **Açık / koyu** tema, marka renklerine uyumlu (kaydedilir). Açık temada buton/input zeminleri daha koyu - beyaz paneller üzerinde net ayrılır.
 - Tema değişince etkileşimde flaş / gel-git olmaz.
 - Windows başlık çubuğu (küçült / büyüt / kapat) desteklenen sürümlerde temaya uyar.
 - Ağ taraması listesi vb. **tema border** kullanır (beyaz sistem çerçevesi değil).
@@ -335,15 +415,15 @@ Sekme çerçevesi temaya uygun renktedir (parlak sistem Notebook kenarlığı yo
 ```
 homepchub/
   assets/     tepsi/uygulama ikonları, logolar
-  core/       config, cihazlar (python-kasa), zamanlayıcı, global kısayollar, ortam modları (+ overrides/özel/aksiyon store)
+  core/       config, cihazlar (python-kasa), zamanlayıcı, kısayollar, sahneler, bildirimler, ortam modları (+ store)
   i18n/       TR/EN metinler ve özellik etiketleri
-  ui/         tepsi, pencere, flyout, ampul/priz/zamanlama/mod-editörü/kısayol, tema, başlık çubuğu
+  ui/         tepsi, pencere, flyout, ampul/priz/zamanlama/mod/kısayol/sahne/bildirim panelleri, tema, chrome
 tray_app.py   ince giriş (python -m homepchub ile aynı)
 ```
 
 ### Lisans
 
-MIT — [LICENSE](LICENSE).
+MIT - [LICENSE](LICENSE).
 
 ---
 

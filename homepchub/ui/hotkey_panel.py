@@ -1,4 +1,4 @@
-"""Global hotkey settings — click a row and press the combo (keyboard capture)."""
+"""Global hotkey settings - click a row and press the combo (keyboard capture)."""
 
 from __future__ import annotations
 

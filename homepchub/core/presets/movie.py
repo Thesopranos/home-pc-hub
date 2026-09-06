@@ -1,4 +1,4 @@
-"""Movie ambient — warm very dim bias light."""
+"""Movie ambient - warm very dim bias light."""
 
 from homepchub.core.presets.base import apply_static_preset, register
 

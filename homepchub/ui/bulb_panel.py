@@ -1,4 +1,4 @@
-"""Bulb feature panel — shows only capabilities the device reports."""
+"""Bulb feature panel - shows only capabilities the device reports."""
 
 from __future__ import annotations
 
@@ -117,7 +117,7 @@ def open_bulb_panel(
     title_lbl.pack(fill="x")
     tk.Label(
         titles,
-        text=f"{device.get('model') or '—'}  ·  {device['host']}",
+        text=f"{device.get('model') or '-'}  ·  {device['host']}",
         bg=theme["bg"],
         fg=theme["text_muted"],
         font=FONTS["meta"],
@@ -301,7 +301,7 @@ def open_bulb_panel(
             power_row, text=t("bulb.on"), variable=power_var, command=on_power
         ).pack(side="right")
 
-        # Ambient presets (reading, work, … — each mode is a registered module)
+        # Ambient presets (reading, work, … - each mode is a registered module)
         preset_ids = bulb_presets.list_preset_ids()
         if preset_ids and (feats.get("color_temp") or feats.get("brightness")):
             section(body, theme, t("preset.section"), ui_help("presets"))
@@ -468,7 +468,7 @@ def open_bulb_panel(
             tscale.bind("<ButtonRelease-1>", apply_temp)
             tk.Label(
                 body,
-                text=f"{tmin} K — {tmax} K",
+                text=f"{tmin} K - {tmax} K",
                 bg=theme["surface"],
                 fg=theme["text_muted"],
                 font=FONTS["subtitle"],

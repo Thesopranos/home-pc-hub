@@ -1,6 +1,6 @@
 """Global hotkeys via keyboard hook (Home Hub style) + capture for settings UI.
 
-keyboard.add_hotkey() can stick when Ctrl is held across sequential keys —
+keyboard.add_hotkey() can stick when Ctrl is held across sequential keys -
 we match the held-key set ourselves instead.
 """
 

@@ -1,4 +1,4 @@
-"""Relax ambient — warm dim (Hue Relax, floored at 2500K)."""
+"""Relax ambient - warm dim (Hue Relax, floored at 2500K)."""
 
 from homepchub.core.presets.base import apply_static_preset, register
 

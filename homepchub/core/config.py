@@ -23,6 +23,7 @@ DEFAULTS = {
         "shared": [],
     },
     "scenes": [],
+    "notifications": {"enabled": False, "rules": []},
 }
 
 

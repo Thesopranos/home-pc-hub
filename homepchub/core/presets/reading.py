@@ -1,4 +1,4 @@
-"""Reading ambient — warm high brightness (Hue Read recipe)."""
+"""Reading ambient - warm high brightness (Hue Read recipe)."""
 
 from homepchub.core.presets.base import apply_static_preset, register
 

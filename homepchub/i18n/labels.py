@@ -207,13 +207,13 @@ UI_HELP = {
     "power": "Ampulü veya prizi açıp kapatır.",
     "presets": "Hazır ortam modları. Ekran Senkronu için monitör seçip Tanımla ile numaraları görebilirsin.",
     "preset_modes": (
-        "Okuma — sıcak, yüksek parlaklık (okumak için).\n"
-        "Çalışma — soğuk, parlak ışık (odak için).\n"
-        "Ekran Senkronu — seçili monitörün ortalama rengine uyar.\n"
-        "Dışarısı — yerel hava ve saate göre renk.\n"
-        "Sirkadiyen Ritim — günün saatine göre Kelvin/parlaklık.\n"
-        "Film — sıcak, çok loş yan ışık.\n"
-        "Rahatlama — sıcak, yumuşak loş ışık."
+        "Okuma - sıcak, yüksek parlaklık (okumak için).\n"
+        "Çalışma - soğuk, parlak ışık (odak için).\n"
+        "Ekran Senkronu - seçili monitörün ortalama rengine uyar.\n"
+        "Dışarısı - yerel hava ve saate göre renk.\n"
+        "Sirkadiyen Ritim - günün saatine göre Kelvin/parlaklık.\n"
+        "Film - sıcak, çok loş yan ışık.\n"
+        "Rahatlama - sıcak, yumuşak loş ışık."
     ),
     "brightness": "Işık şiddetini yüzde olarak ayarlar. Bırakınca cihaza gönderilir.",
     "color_temp": "Beyaz ışığın sıcak/soğuk tonunu Kelvin cinsinden ayarlar.",
@@ -310,13 +310,13 @@ UI_HELP_EN = {
     "power": "Turns the bulb or plug on or off.",
     "presets": "Ambient light recipes. For Screen Sync, pick a monitor and use Identify to see numbers on each display.",
     "preset_modes": (
-        "Reading — warm, bright light for reading.\n"
-        "Work — cool, bright light for focus.\n"
-        "Screen Sync — follows the average color of the chosen monitor.\n"
-        "Outside — color from local weather and time of day.\n"
-        "Circadian Rhythm — Kelvin/brightness follow the time of day.\n"
-        "Movie — warm, very dim bias light.\n"
-        "Relax — warm, soft dim light."
+        "Reading - warm, bright light for reading.\n"
+        "Work - cool, bright light for focus.\n"
+        "Screen Sync - follows the average color of the chosen monitor.\n"
+        "Outside - color from local weather and time of day.\n"
+        "Circadian Rhythm - Kelvin/brightness follow the time of day.\n"
+        "Movie - warm, very dim bias light.\n"
+        "Relax - warm, soft dim light."
     ),
     "brightness": "Sets light intensity as a percentage. Sent when you release the slider.",
     "color_temp": "Sets white light warmth/coolness in Kelvin.",
@@ -453,7 +453,7 @@ def kind_label(kind: str | None) -> str:
     from homepchub.i18n import t
 
     if not kind:
-        return "—"
+        return "-"
     key = f"kind.{kind}"
     mapped = t(key)
     return mapped if mapped != key else kind
@@ -481,7 +481,7 @@ def value_label(value) -> str:
     from homepchub.i18n import get_lang, t
 
     if value is None:
-        return "—"
+        return "-"
     if isinstance(value, bool):
         return t("yes") if value else t("no")
     if isinstance(value, str):
@@ -491,7 +491,7 @@ def value_label(value) -> str:
         if low in ("false", "no", "off"):
             return t("no")
         if low in ("none", "null", "n/a"):
-            return "—"
+            return "-"
         if get_lang() == "en":
             mapped = {
                 "not set": "Not set",
@@ -518,6 +518,6 @@ def value_label(value) -> str:
 def format_display(value, unit: str | None = None) -> str:
     text = value_label(value)
     u = unit_label(unit)
-    if text == "—" or not u:
+    if text == "-" or not u:
         return text
     return f"{text} {u}"

@@ -9,6 +9,7 @@ from homepchub.assets import tray_image
 from homepchub.core.config import ensure_credentials, get_theme_mode
 from homepchub.core.devices import set_credentials
 from homepchub.core import hotkeys as hotkey_engine
+from homepchub.core import notifications as notify_engine
 from homepchub.core.scheduler import start as start_scheduler
 from homepchub.i18n import t
 from homepchub.ui.flyout import close_flyout, open_flyout
@@ -18,9 +19,27 @@ from homepchub.ui.winchrome import dress_window
 
 DOUBLE_CLICK_MS = 350
 _click_state = {"after_id": None}
+_MUTEX_NAME = "Local\\HomePcHub.TrayApp.SingleInstance"
+_ERROR_ALREADY_EXISTS = 183
+
+
+def _claim_single_instance() -> bool:
+    """Only one tray process may run - shared WinRT notify API hangs otherwise."""
+    try:
+        handle = ctypes.windll.kernel32.CreateMutexW(None, False, _MUTEX_NAME)
+        if not handle:
+            return True
+        if ctypes.windll.kernel32.GetLastError() == _ERROR_ALREADY_EXISTS:
+            return False
+        return True
+    except Exception:
+        return True
 
 
 def main():
+    if not _claim_single_instance():
+        sys.exit(0)
+
     try:
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
             "HomePcHub.TrayApp"
@@ -53,6 +72,7 @@ def main():
 
     def quit_app(icon, item=None):
         close_flyout()
+        notify_engine.stop_listener()
         icon.stop()
         root.after(0, root.destroy)
 
@@ -104,6 +124,7 @@ def main():
         on_settings=lambda: root.after(0, show_full),
     )
     hotkey_engine.reload()
+    notify_engine.start_if_enabled()
 
     root.mainloop()
     _ = main_win

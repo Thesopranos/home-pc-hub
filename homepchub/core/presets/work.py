@@ -1,4 +1,4 @@
-﻿"""Work / concentrate ambient — cool bright (Hue Concentrate recipe)."""
+﻿"""Work / concentrate ambient - cool bright (Hue Concentrate recipe)."""
 
 from homepchub.core.presets.base import apply_static_preset, register
 

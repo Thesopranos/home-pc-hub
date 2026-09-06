@@ -23,6 +23,7 @@ from homepchub.ui.tooltip import attach_info_icon, labeled_row
 from homepchub.ui.layout import ThemedVScrollbar, size_window
 from homepchub.ui.preset_editor import open_preset_editor
 from homepchub.ui.hotkey_panel import open_hotkey_panel
+from homepchub.ui.notify_panel import open_notify_panel
 from homepchub.ui.scene_panel import open_scene_panel
 from homepchub.ui.winchrome import dress_window
 
@@ -30,7 +31,7 @@ STATUS_POLL_MS = 5000
 
 
 class ToggleSwitch(tk.Canvas):
-    """Pill toggle drawn on canvas — not a stock ttk checkbutton."""
+    """Pill toggle drawn on canvas - not a stock ttk checkbutton."""
 
     WIDTH = 46
     HEIGHT = 26
@@ -502,6 +503,10 @@ class MainWindow:
                 label=t("menu.scenes"),
                 command=lambda: open_scene_panel(self.root, self.mode),
             )
+            menu.add_command(
+                label=t("menu.notifications"),
+                command=lambda: open_notify_panel(self.root, self.mode),
+            )
 
         self._popup_menu("automation", build)
 
@@ -620,14 +625,14 @@ class MainWindow:
             if is_multi:
                 meta = t(
                     "meta.sockets",
-                    model=device.get("model") or "—",
+                    model=device.get("model") or "-",
                     host=device["host"],
                     count=socket_count,
                 )
             else:
                 meta = t(
                     "meta.plain",
-                    model=device.get("model") or "—",
+                    model=device.get("model") or "-",
                     host=device["host"],
                 )
 
@@ -660,7 +665,7 @@ class MainWindow:
             device_switch = None
 
             if is_multi:
-                # Parent-level features (LED etc.) — energy is usually per socket
+                # Parent-level features (LED etc.) - energy is usually per socket
                 ttk.Button(
                     right,
                     text="···",
@@ -1027,7 +1032,7 @@ class MainWindow:
             if status != "ok" or data is None:
                 row["status"].configure(text=t("status.offline"), fg=self.theme["danger"])
                 for lbl in row["socket_labels"].values():
-                    lbl.configure(text="—", fg=self.theme["text_muted"])
+                    lbl.configure(text="-", fg=self.theme["text_muted"])
                 continue
 
             sockets = data.get("sockets") or []

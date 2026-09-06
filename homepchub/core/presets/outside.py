@@ -1,4 +1,4 @@
-"""Outside ambient — color from local weather + time of day."""
+"""Outside ambient - color from local weather + time of day."""
 
 from __future__ import annotations
 

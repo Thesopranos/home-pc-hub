@@ -1,4 +1,4 @@
-"""Screen sync ambient — match average color of a chosen monitor."""
+"""Screen sync ambient - match average color of a chosen monitor."""
 
 from __future__ import annotations
 

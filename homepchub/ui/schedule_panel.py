@@ -1,4 +1,4 @@
-"""Schedule editor — timed rules and on/off loops are separate tabs."""
+"""Schedule editor - timed rules and on/off loops are separate tabs."""
 
 from __future__ import annotations
 
@@ -59,18 +59,18 @@ def _summarize_timed(rule: dict) -> str:
     bits = [
         f"[{en}]",
         _kind_label(kind),
-        rule.get("time") or "—",
+        rule.get("time") or "-",
         _action_label(rule.get("action") or "on"),
     ]
     if kind == "once":
-        bits.insert(2, rule.get("date") or "—")
+        bits.insert(2, rule.get("date") or "-")
     elif kind == "weekly":
         days = rule.get("weekdays") or []
-        bits.insert(2, ",".join(str(int(d) + 1) for d in days) or "—")
+        bits.insert(2, ",".join(str(int(d) + 1) for d in days) or "-")
     elif kind == "monthly":
-        bits.insert(2, f"D{rule.get('day_of_month') or '—'}")
+        bits.insert(2, f"D{rule.get('day_of_month') or '-'}")
     elif kind == "yearly":
-        bits.insert(2, f"{rule.get('month') or '—'}/{rule.get('day') or '—'}")
+        bits.insert(2, f"{rule.get('month') or '-'}/{rule.get('day') or '-'}")
     return " · ".join(str(b) for b in bits)
 
 
@@ -110,7 +110,7 @@ def open_schedule_panel(
             if int(s["index"]) == socket:
                 sock_name = s.get("alias") or sock_name
                 break
-        title = f"{base} — {sock_name}"
+        title = f"{base} - {sock_name}"
     else:
         title = base
     win.title(t("sched.title", name=title))
@@ -142,7 +142,7 @@ def open_schedule_panel(
         footer, text=t("plug.close"), style="Ghost.TButton", command=win.destroy
     ).pack(side="right")
 
-    # Custom tabs — ttk.Notebook draws a harsh system border on Windows
+    # Custom tabs - ttk.Notebook draws a harsh system border on Windows
     tabs_bar = tk.Frame(root, bg=theme["bg"])
     tabs_bar.pack(fill="x", pady=(12, 0))
     body_wrap = tk.Frame(
@@ -254,7 +254,7 @@ def open_schedule_panel(
             row=row, column=0, sticky="w", pady=(top, 0)
         )
 
-    # Row 0 — kind
+    # Row 0 - kind
     _form_label(t("sched.kind"), 0, top=0)
     kind_combo = ttk.Combobox(
         timed_form,
@@ -265,7 +265,7 @@ def open_schedule_panel(
     )
     kind_combo.grid(row=0, column=1, sticky="ew", padx=(12, 0))
 
-    # Row 1 — time
+    # Row 1 - time
     _form_label(t("sched.time"), 1)
     ttk.Entry(timed_form, textvariable=time_var, width=10).grid(
         row=1, column=1, sticky="w", padx=(12, 0), pady=(8, 0)
