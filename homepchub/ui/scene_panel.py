@@ -131,9 +131,17 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
         cursor="hand2",
     )
     steps_list.grid(row=4, column=0, sticky="ew", pady=(6, 0))
+    tk.Label(
+        form,
+        text=t("scene.edit_hint"),
+        bg=theme["surface"],
+        fg=theme["text_muted"],
+        font=FONTS["meta"],
+        anchor="w",
+    ).grid(row=5, column=0, sticky="ew", pady=(4, 0))
 
     add_row = tk.Frame(form, bg=theme["surface"])
-    add_row.grid(row=5, column=0, sticky="ew", pady=(10, 0))
+    add_row.grid(row=6, column=0, sticky="ew", pady=(8, 0))
     add_row.columnconfigure(0, weight=3)
     add_row.columnconfigure(1, weight=2)
     add_row.columnconfigure(2, weight=2)
@@ -262,6 +270,8 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
     action_combo.bind("<<ComboboxSelected>>", sync_mode_visibility)
     sync_action_choices()
 
+    editing = {"index": None, "loading": False}
+
     def refresh_steps_view(select_index: int | None = None) -> None:
         steps_list.delete(0, "end")
         label_by_key = {tgt["key"]: tgt["label"] for tgt in targets}
@@ -284,11 +294,133 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
             steps_list.selection_set(select_index)
             steps_list.activate(select_index)
             steps_list.see(select_index)
+            editing["index"] = select_index
+        elif editing["index"] is not None and editing["index"] >= len(draft_steps):
+            editing["index"] = None
 
-    drag = {"index": None}
+    def _step_same(a: dict, b: dict) -> bool:
+        if a.get("action") == scene_store.ACTION_WAIT or b.get("action") == scene_store.ACTION_WAIT:
+            return (
+                a.get("action") == scene_store.ACTION_WAIT
+                and b.get("action") == scene_store.ACTION_WAIT
+                and a.get("ms") == b.get("ms")
+            )
+        return (
+            a.get("device_id") == b.get("device_id")
+            and a.get("socket") == b.get("socket")
+            and a.get("action") == b.get("action")
+            and a.get("preset_id") == b.get("preset_id")
+        )
+
+    def _consecutive_conflict(step: dict, at: int) -> bool:
+        """True if step at index `at` would sit next to an identical non-wait neighbor."""
+        if step.get("action") == scene_store.ACTION_WAIT:
+            if at > 0 and _step_same(draft_steps[at - 1], step):
+                return True
+            if at + 1 < len(draft_steps) and _step_same(draft_steps[at + 1], step):
+                return True
+            return False
+        prev = None
+        for j in range(at - 1, -1, -1):
+            if draft_steps[j].get("action") == scene_store.ACTION_WAIT:
+                continue
+            prev = draft_steps[j]
+            break
+        if prev is not None and _step_same(prev, step):
+            return True
+        nxt = None
+        for j in range(at + 1, len(draft_steps)):
+            if draft_steps[j].get("action") == scene_store.ACTION_WAIT:
+                continue
+            nxt = draft_steps[j]
+            break
+        if nxt is not None and _step_same(nxt, step):
+            return True
+        return False
+
+    def _build_step_from_form() -> dict | None:
+        tgt = target_by_label.get(target_var.get())
+        if not tgt:
+            return None
+        if tgt["kind"] == "wait":
+            try:
+                ms = int((wait_ms_var.get() or "").strip())
+            except ValueError:
+                messagebox.showerror(t("scene.title"), t("scene.wait_invalid"), parent=win)
+                return None
+            if ms < 0 or ms > 600_000:
+                messagebox.showerror(t("scene.title"), t("scene.wait_invalid"), parent=win)
+                return None
+            return {"action": scene_store.ACTION_WAIT, "ms": ms}
+        keys = getattr(action_combo, "_keys", [])
+        choices = list(action_combo.cget("values") or [])
+        try:
+            idx = choices.index(action_var.get())
+            action = keys[idx]
+        except (ValueError, IndexError):
+            return None
+        step = {
+            "device_id": tgt["device_id"],
+            "socket": tgt["socket"],
+            "action": action,
+        }
+        if action == scene_store.ACTION_APPLY_MODE:
+            if tgt["kind"] != "bulb":
+                return None
+            pid = mode_by_label.get(mode_var.get())
+            if not pid:
+                return None
+            step["preset_id"] = pid
+        return step
+
+    def load_step_into_form(index: int) -> None:
+        if index < 0 or index >= len(draft_steps):
+            editing["index"] = None
+            return
+        step = draft_steps[index]
+        editing["loading"] = True
+        editing["index"] = index
+        try:
+            if step.get("action") == scene_store.ACTION_WAIT:
+                target_var.set(wait_target["label"])
+                sync_action_choices()
+                wait_ms_var.set(str(int(step.get("ms") or 0)))
+            else:
+                sock = step.get("socket")
+                key = f"{step['device_id']}:{'' if sock is None else sock}"
+                label = None
+                for tgt in targets:
+                    if tgt.get("key") == key:
+                        label = tgt["label"]
+                        break
+                if label is None:
+                    editing["loading"] = False
+                    return
+                target_var.set(label)
+                sync_action_choices()
+                keys = getattr(action_combo, "_keys", [])
+                choices = list(action_combo.cget("values") or [])
+                action = step.get("action")
+                if action in keys:
+                    action_var.set(choices[keys.index(action)])
+                sync_mode_visibility()
+                if action == scene_store.ACTION_APPLY_MODE:
+                    pid = step.get("preset_id")
+                    for lbl, mid in mode_by_label.items():
+                        if mid == pid:
+                            mode_var.set(lbl)
+                            break
+            steps_list.selection_clear(0, "end")
+            steps_list.selection_set(index)
+            steps_list.activate(index)
+        finally:
+            editing["loading"] = False
+
+    drag = {"index": None, "moved": False}
 
     def _steps_drag_start(event):
         idx = steps_list.nearest(event.y)
+        drag["moved"] = False
         if 0 <= idx < len(draft_steps):
             drag["index"] = idx
             steps_list.selection_clear(0, "end")
@@ -306,51 +438,27 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
             return
         draft_steps.insert(to_i, draft_steps.pop(from_i))
         drag["index"] = to_i
+        drag["moved"] = True
         refresh_steps_view(to_i)
 
     def _steps_drag_end(_event=None):
+        idx = drag["index"]
         drag["index"] = None
+        drag["moved"] = False
+        if idx is not None and 0 <= idx < len(draft_steps):
+            load_step_into_form(idx)
 
     steps_list.bind("<ButtonPress-1>", _steps_drag_start)
     steps_list.bind("<B1-Motion>", _steps_drag_motion)
     steps_list.bind("<ButtonRelease-1>", _steps_drag_end)
 
     def on_add_step() -> None:
-        tgt = target_by_label.get(target_var.get())
-        if not tgt:
+        step = _build_step_from_form()
+        if not step:
             return
-        if tgt["kind"] == "wait":
-            try:
-                ms = int((wait_ms_var.get() or "").strip())
-            except ValueError:
-                messagebox.showerror(t("scene.title"), t("scene.wait_invalid"), parent=win)
-                return
-            if ms < 0 or ms > 600_000:
-                messagebox.showerror(t("scene.title"), t("scene.wait_invalid"), parent=win)
-                return
-            step = {"action": scene_store.ACTION_WAIT, "ms": ms}
-        else:
-            keys = getattr(action_combo, "_keys", [])
-            choices = list(action_combo.cget("values") or [])
-            try:
-                idx = choices.index(action_var.get())
-                action = keys[idx]
-            except (ValueError, IndexError):
-                return
-            step = {
-                "device_id": tgt["device_id"],
-                "socket": tgt["socket"],
-                "action": action,
-            }
-            if action == scene_store.ACTION_APPLY_MODE:
-                if tgt["kind"] != "bulb":
-                    return
-                pid = mode_by_label.get(mode_var.get())
-                if not pid:
-                    return
-                step["preset_id"] = pid
+        at = len(draft_steps)
+        # temporarily append for neighbor check against previous only
         if step.get("action") == scene_store.ACTION_WAIT:
-            # Consecutive identical waits only
             if (
                 draft_steps
                 and draft_steps[-1].get("action") == scene_store.ACTION_WAIT
@@ -359,37 +467,68 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
                 messagebox.showinfo(t("scene.title"), t("scene.duplicate_step"), parent=win)
                 return
         else:
-            # Same device step cannot follow itself back-to-back; skip waits in between
             prev = None
             for existing in reversed(draft_steps):
                 if existing.get("action") == scene_store.ACTION_WAIT:
                     continue
                 prev = existing
                 break
-            if (
-                prev is not None
-                and prev.get("device_id") == step.get("device_id")
-                and prev.get("socket") == step.get("socket")
-                and prev.get("action") == step.get("action")
-                and prev.get("preset_id") == step.get("preset_id")
-            ):
+            if prev is not None and _step_same(prev, step):
                 messagebox.showinfo(t("scene.title"), t("scene.duplicate_step"), parent=win)
                 return
         draft_steps.append(step)
-        refresh_steps_view()
+        editing["index"] = None
+        refresh_steps_view(at)
+        load_step_into_form(at)
+
+    def on_update_step() -> None:
+        idx = editing.get("index")
+        if idx is None or idx < 0 or idx >= len(draft_steps):
+            messagebox.showinfo(t("scene.title"), t("scene.edit_hint"), parent=win)
+            return
+        step = _build_step_from_form()
+        if not step:
+            return
+        old = draft_steps[idx]
+        draft_steps[idx] = step
+        if _consecutive_conflict(step, idx):
+            draft_steps[idx] = old
+            messagebox.showinfo(t("scene.title"), t("scene.duplicate_step"), parent=win)
+            return
+        refresh_steps_view(idx)
+        load_step_into_form(idx)
 
     def on_remove_step() -> None:
         sel = steps_list.curselection()
-        if not sel:
+        idx = sel[0] if sel else editing.get("index")
+        if idx is None or idx < 0 or idx >= len(draft_steps):
             return
-        del draft_steps[sel[0]]
+        del draft_steps[idx]
+        editing["index"] = None
         refresh_steps_view()
 
+    def _auto_update_if_editing(_e=None) -> None:
+        if editing["loading"] or editing.get("index") is None:
+            return
+        on_update_step()
+
+    target_combo.bind("<<ComboboxSelected>>", lambda e: (sync_action_choices(e), _auto_update_if_editing()))
+    action_combo.bind("<<ComboboxSelected>>", lambda e: (sync_mode_visibility(e), _auto_update_if_editing()))
+    mode_combo.bind("<<ComboboxSelected>>", _auto_update_if_editing)
+    wait_entry.bind("<FocusOut>", _auto_update_if_editing)
+    wait_entry.bind("<Return>", _auto_update_if_editing)
+
     act_btns = tk.Frame(form, bg=theme["surface"])
-    act_btns.grid(row=6, column=0, sticky="w", pady=(6, 0))
+    act_btns.grid(row=7, column=0, sticky="w", pady=(6, 0))
     ttk.Button(
         act_btns, text=t("scene.add_step"), style="TButton", command=on_add_step
     ).pack(side="left")
+    ttk.Button(
+        act_btns,
+        text=t("scene.update_step"),
+        style="Ghost.TButton",
+        command=on_update_step,
+    ).pack(side="left", padx=(6, 0))
     ttk.Button(
         act_btns,
         text=t("scene.remove_step"),
@@ -431,7 +570,10 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
         selected["id"] = sid
         name_var.set(scene["label"])
         draft_steps = list(scene["steps"])
+        editing["index"] = None
         refresh_steps_view()
+        if draft_steps:
+            load_step_into_form(0)
 
     scene_list.bind("<<ListboxSelect>>", load_selected)
 
