@@ -13,3 +13,4 @@ _commit.py
 _wire_preset.py
 _*.py
 !homepchub/**/*.py
+scripts/

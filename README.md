@@ -39,7 +39,7 @@ Home Pc Hub runs in the Windows tray. You scan for Tapo devices, build your own 
 
 ![Tray flyout](screenshots/en-flyout.png)
 
-> Screenshots captured live in English UI via Pillow `ImageGrab` (`scripts/capture_readme_screens.py`).
+> Screenshots captured live in English UI via Pillow `ImageGrab`.
 
 ### Requirements
 
@@ -204,7 +204,7 @@ Home Pc Hub, Windows tepsi uygulamasıdır. Tapo cihazlarını ağda bulur, kend
 
 ![Tepsi flyout](screenshots/tr-flyout.png)
 
-> Görseller Türkçe arayüzde canlı alındı (`scripts/capture_readme_screens.py`, Pillow `ImageGrab`).
+> Görseller Türkçe arayüzde canlı alındı (Pillow `ImageGrab`).
 
 ### Gereksinimler
 
