@@ -164,7 +164,7 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
         state="readonly" if mode_labels else "disabled",
         width=14,
     )
-    mode_combo.grid(row=0, column=2, sticky="ew", padx=(6, 0))
+    # Shown only for bulbs with "apply mode" — see sync_mode_visibility
 
     selected: dict[str, str | None] = {"id": None}
     draft_steps: list[dict] = []
@@ -208,6 +208,7 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
         sync_mode_visibility()
 
     def sync_mode_visibility(_e=None) -> None:
+        tgt = target_by_label.get(target_var.get())
         keys = getattr(action_combo, "_keys", [])
         choices = list(action_combo.cget("values") or [])
         try:
@@ -215,10 +216,17 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
             action = keys[idx]
         except (ValueError, IndexError):
             action = None
-        if action == scene_store.ACTION_APPLY_MODE and mode_labels:
+        show = (
+            tgt is not None
+            and tgt.get("kind") == "bulb"
+            and action == scene_store.ACTION_APPLY_MODE
+            and bool(mode_labels)
+        )
+        if show:
+            mode_combo.grid(row=0, column=2, sticky="ew", padx=(6, 0))
             mode_combo.configure(state="readonly")
         else:
-            mode_combo.configure(state="disabled")
+            mode_combo.grid_remove()
 
     target_combo.bind("<<ComboboxSelected>>", sync_action_choices)
     action_combo.bind("<<ComboboxSelected>>", sync_mode_visibility)
