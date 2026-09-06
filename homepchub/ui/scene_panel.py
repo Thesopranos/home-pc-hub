@@ -478,8 +478,8 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
                 return
         draft_steps.append(step)
         editing["index"] = None
-        refresh_steps_view(at)
-        load_step_into_form(at)
+        refresh_steps_view()
+        steps_list.selection_clear(0, "end")
 
     def on_update_step() -> None:
         idx = editing.get("index")
@@ -506,17 +506,7 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
         del draft_steps[idx]
         editing["index"] = None
         refresh_steps_view()
-
-    def _auto_update_if_editing(_e=None) -> None:
-        if editing["loading"] or editing.get("index") is None:
-            return
-        on_update_step()
-
-    target_combo.bind("<<ComboboxSelected>>", lambda e: (sync_action_choices(e), _auto_update_if_editing()))
-    action_combo.bind("<<ComboboxSelected>>", lambda e: (sync_mode_visibility(e), _auto_update_if_editing()))
-    mode_combo.bind("<<ComboboxSelected>>", _auto_update_if_editing)
-    wait_entry.bind("<FocusOut>", _auto_update_if_editing)
-    wait_entry.bind("<Return>", _auto_update_if_editing)
+        steps_list.selection_clear(0, "end")
 
     act_btns = tk.Frame(form, bg=theme["surface"])
     act_btns.grid(row=7, column=0, sticky="w", pady=(6, 0))
