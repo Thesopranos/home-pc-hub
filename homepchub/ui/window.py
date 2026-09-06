@@ -23,6 +23,7 @@ from homepchub.ui.tooltip import attach_info_icon, labeled_row
 from homepchub.ui.layout import ThemedVScrollbar, size_window
 from homepchub.ui.preset_editor import open_preset_editor
 from homepchub.ui.hotkey_panel import open_hotkey_panel
+from homepchub.ui.scene_panel import open_scene_panel
 from homepchub.ui.winchrome import dress_window
 
 STATUS_POLL_MS = 5000
@@ -445,14 +446,14 @@ class MainWindow:
         for child in self.menubar.winfo_children():
             child.destroy()
         self._menu_btns.clear()
-        hotkey_btn = ttk.Button(
+        auto_btn = ttk.Button(
             self.menubar,
-            text=t("menu.hotkeys"),
+            text=f"{t('menu.automation')} ▾",
             style="Ghost.TButton",
-            command=lambda: open_hotkey_panel(self.root, self.mode),
+            command=self._open_automation_menu,
         )
-        hotkey_btn.pack(side="left")
-        self._menu_btns["hotkeys"] = hotkey_btn
+        auto_btn.pack(side="left")
+        self._menu_btns["automation"] = auto_btn
         if self._has_bulb():
             btn = ttk.Button(
                 self.menubar,
@@ -463,8 +464,8 @@ class MainWindow:
             btn.pack(side="left", padx=(8, 0))
             self._menu_btns["bulb"] = btn
 
-    def _open_bulb_menu(self) -> None:
-        btn = self._menu_btns.get("bulb")
+    def _popup_menu(self, btn_key: str, build) -> None:
+        btn = self._menu_btns.get(btn_key)
         menu = tk.Menu(
             self.root,
             tearoff=0,
@@ -475,10 +476,7 @@ class MainWindow:
             bd=0,
             font=FONTS["ui"],
         )
-        menu.add_command(
-            label=t("menu.edit_presets"),
-            command=lambda: open_preset_editor(self.root, self.mode),
-        )
+        build(menu)
         if btn is not None:
             try:
                 x = btn.winfo_rootx()
@@ -493,6 +491,28 @@ class MainWindow:
             menu.tk_popup(x, y)
         finally:
             menu.grab_release()
+
+    def _open_automation_menu(self) -> None:
+        def build(menu: tk.Menu) -> None:
+            menu.add_command(
+                label=t("menu.hotkeys"),
+                command=lambda: open_hotkey_panel(self.root, self.mode),
+            )
+            menu.add_command(
+                label=t("menu.scenes"),
+                command=lambda: open_scene_panel(self.root, self.mode),
+            )
+
+        self._popup_menu("automation", build)
+
+    def _open_bulb_menu(self) -> None:
+        def build(menu: tk.Menu) -> None:
+            menu.add_command(
+                label=t("menu.edit_presets"),
+                command=lambda: open_preset_editor(self.root, self.mode),
+            )
+
+        self._popup_menu("bulb", build)
 
     def _theme_btn_label(self) -> str:
         return t("theme.to_light") if self.mode == "dark" else t("theme.to_dark")

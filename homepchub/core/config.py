@@ -20,6 +20,7 @@ DEFAULTS = {
         "targets": {},
         "shared": [],
     },
+    "scenes": [],
 }
 
 

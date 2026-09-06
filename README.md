@@ -86,7 +86,8 @@ From a plug/outlet feature panel, **Schedule…** opens the schedule editor (tim
 - **Double-click** → full settings window.
 - Menu: settings, quick panel, exit.
 - Tray icon and window icon use the Home PC Hub brand mark.
-- **Global shortcuts** (header **Shortcuts…**): click a row and **press** the combo (keyboard capture; Esc cancels). Default flyout shortcut `ctrl+shift+h`. Bind toggles per device/outlet. Needs the `keyboard` package; works while the app is running.
+- **Global shortcuts** (header **Automation ▾ → Shortcuts…**): click a row and **press** the combo (keyboard capture; Esc cancels). Default flyout shortcut `ctrl+shift+h`. Bind toggles per device/outlet. Needs the `keyboard` package; works while the app is running.
+- **Scenes** (**Automation ▾ → Scenes…**): named one-tap recipes (e.g. bulb → Work + strip outlet on). Shown as quick buttons on the tray flyout; steps run in order.
 
 #### Device discovery & list
 
@@ -252,7 +253,8 @@ Priz/soket özellik panelindeki **Zamanlama…**, zamanlı kurallar + açık/kap
 - **Çift tık** → tam ayar penceresi.
 - Menü: ayarlar, hızlı panel, çıkış.
 - Tepsi ve pencere ikonu marka amblemini kullanır.
-- **Global kısayollar** (başlıkta **Kısayollar…**): satıra tıkla, kombinasyonu **bas** (klavye yakalama; Esc iptal). Varsayılan flyout: `ctrl+shift+h`. Cihaz/soket başına aç-kapa. `keyboard` paketi gerekir; uygulama açıkken çalışır.
+- **Global kısayollar** (başlıkta **Otomasyon ▾ → Kısayollar…**): satıra tıkla, kombinasyonu **bas** (klavye yakalama; Esc iptal). Varsayılan flyout: `ctrl+shift+h`. Cihaz/soket başına aç-kapa. `keyboard` paketi gerekir; uygulama açıkken çalışır.
+- **Sahneler** (**Otomasyon ▾ → Sahneler…**): tek tıkla çoklu cihaz (örn. ampul → Çalışma + şerit açık). Flyout’ta buton olarak çıkar; adımlar sırayla çalışır.
 
 #### Cihaz bulma ve liste
 

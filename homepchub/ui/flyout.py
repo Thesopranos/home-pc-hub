@@ -8,6 +8,7 @@ from tkinter import ttk
 
 from homepchub.assets import logo_photo
 from homepchub.core.config import get_theme_mode, load_config
+from homepchub.core import scenes as scene_store
 from homepchub.core.devices import get_status, set_power
 from homepchub.i18n import t
 from homepchub.ui.preset_picker import add_preset_select
@@ -119,6 +120,39 @@ def open_flyout(root: tk.Tk, *, on_open_full=None) -> None:
     body.pack(fill="both", expand=True)
 
     status_var = tk.StringVar(value="")
+    scenes = scene_store.list_scenes()
+    if scenes:
+        tk.Label(
+            body,
+            text=t("scene.section"),
+            bg=theme["surface"],
+            fg=theme["text_muted"],
+            font=FONTS["meta"],
+            anchor="w",
+        ).pack(fill="x", pady=(0, 4))
+        scene_wrap = tk.Frame(body, bg=theme["surface"])
+        scene_wrap.pack(fill="x", pady=(0, 8))
+
+        def _run_scene(sid: str, label: str):
+            def go():
+                try:
+                    scene_store.apply_scene(sid)
+                    win.after(0, lambda: status_var.set(t("scene.applied", name=label)))
+                except Exception as exc:
+                    win.after(0, lambda: status_var.set(t("status.error", error=str(exc))))
+
+            status_var.set(t("scene.applying"))
+            threading.Thread(target=go, daemon=True).start()
+
+        for scene in scenes:
+            ttk.Button(
+                scene_wrap,
+                text=scene["label"],
+                style="Ghost.TButton",
+                command=lambda s=scene: _run_scene(s["id"], s["label"]),
+            ).pack(side="left", padx=(0, 6), pady=(0, 4))
+        tk.Frame(body, bg=theme["border"], height=1).pack(fill="x", pady=(2, 8))
+
     devices = load_config().get("devices") or []
     rows: list[dict] = []
 
