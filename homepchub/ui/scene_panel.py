@@ -314,6 +314,7 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
                     return
                 step["preset_id"] = pid
         if step.get("action") == scene_store.ACTION_WAIT:
+            # Consecutive identical waits only
             if (
                 draft_steps
                 and draft_steps[-1].get("action") == scene_store.ACTION_WAIT
@@ -322,17 +323,22 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
                 messagebox.showinfo(t("scene.title"), t("scene.duplicate_step"), parent=win)
                 return
         else:
-            for existing in draft_steps:
-                if (
-                    existing.get("device_id") == step.get("device_id")
-                    and existing.get("socket") == step.get("socket")
-                    and existing.get("action") == step.get("action")
-                    and existing.get("preset_id") == step.get("preset_id")
-                ):
-                    messagebox.showinfo(
-                        t("scene.title"), t("scene.duplicate_step"), parent=win
-                    )
-                    return
+            # Same device step cannot follow itself back-to-back; skip waits in between
+            prev = None
+            for existing in reversed(draft_steps):
+                if existing.get("action") == scene_store.ACTION_WAIT:
+                    continue
+                prev = existing
+                break
+            if (
+                prev is not None
+                and prev.get("device_id") == step.get("device_id")
+                and prev.get("socket") == step.get("socket")
+                and prev.get("action") == step.get("action")
+                and prev.get("preset_id") == step.get("preset_id")
+            ):
+                messagebox.showinfo(t("scene.title"), t("scene.duplicate_step"), parent=win)
+                return
         draft_steps.append(step)
         refresh_steps_view()
 
