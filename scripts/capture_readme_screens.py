@@ -1,6 +1,6 @@
-"""Capture README screenshots of main settings / ambient editor / schedule / flyout.
+"""Capture README screenshots in TR and EN.
 
-Tkinter has no built-in screenshot API — we use window screen coords + Pillow ImageGrab.
+Tkinter has no built-in screenshot API — window coords + Pillow ImageGrab.
 Run:  .venv\\Scripts\\python scripts\\capture_readme_screens.py
 """
 
@@ -16,6 +16,13 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 OUT = ROOT / "screenshots"
 OUT.mkdir(exist_ok=True)
+
+SHOTS = (
+    "main",
+    "ambient-editor",
+    "schedule",
+    "flyout",
+)
 
 
 def _grab(win: tk.Misc, path: Path, *, pad: int = 0) -> None:
@@ -36,19 +43,19 @@ def _toplevels(root: tk.Tk) -> list[tk.Toplevel]:
     return [w for w in root.winfo_children() if isinstance(w, tk.Toplevel)]
 
 
-def main() -> None:
+def _capture_lang(lang: str) -> None:
     from homepchub.core.config import get_theme_mode, load_config
     from homepchub.core.presets import store as preset_store
+    from homepchub.i18n import set_lang
     from homepchub.ui.flyout import close_flyout, open_flyout
     from homepchub.ui.preset_editor import open_preset_editor
     from homepchub.ui.schedule_panel import open_schedule_panel
     from homepchub.ui.window import MainWindow
 
-    cfg = load_config()
-    devices = cfg.get("devices") or []
+    set_lang(lang)
     theme_mode = get_theme_mode()
+    devices = load_config().get("devices") or []
 
-    # Temporary sample linked actions so the editor screenshot is meaningful
     prev_actions = preset_store.get_actions("reading")
     sample = []
     for tgt in preset_store.iter_action_targets():
@@ -75,28 +82,32 @@ def main() -> None:
         preset_store.set_actions("reading", sample)
 
     root = tk.Tk()
-    app = MainWindow(root)
+    MainWindow(root)
     root.deiconify()
     root.lift()
     root.attributes("-topmost", True)
-    root.after(200, lambda: root.attributes("-topmost", False))
+    root.after(150, lambda: root.attributes("-topmost", False))
 
     step = {"n": 0}
+    prefix = lang
 
-    def restore_actions():
+    def restore():
         preset_store.set_actions("reading", prev_actions)
 
     def fail(msg: str):
-        restore_actions()
-        print("ERROR:", msg)
-        root.destroy()
+        restore()
+        print(f"ERROR [{lang}]:", msg)
+        try:
+            root.destroy()
+        except tk.TclError:
+            pass
 
     def go():
         n = step["n"]
         step["n"] += 1
         try:
             if n == 0:
-                _grab(root, OUT / "ss4_main_bulb_menu.png")
+                _grab(root, OUT / f"{prefix}-main.png")
                 open_preset_editor(root, theme_mode)
                 root.after(700, go)
             elif n == 1:
@@ -104,16 +115,14 @@ def main() -> None:
                 if not tops:
                     return fail("preset editor missing")
                 ed = tops[-1]
-                # Prefer "reading" selected — editor loads first editable on open
-                _grab(ed, OUT / "ss5_ambient_editor.png")
+                _grab(ed, OUT / f"{prefix}-ambient-editor.png")
                 ed.destroy()
                 root.after(300, go)
             elif n == 2:
                 if not devices:
-                    print("skip schedule (no devices)")
+                    print(f"skip schedule [{lang}] (no devices)")
                     root.after(100, go)
                     return
-                # Prefer a plug/strip for schedule screenshot
                 target = devices[0]
                 socket = None
                 for d in devices:
@@ -129,10 +138,10 @@ def main() -> None:
             elif n == 3:
                 tops = _toplevels(root)
                 if tops:
-                    _grab(tops[-1], OUT / "ss6_schedule.png")
+                    _grab(tops[-1], OUT / f"{prefix}-schedule.png")
                     tops[-1].destroy()
                 else:
-                    print("skip schedule capture")
+                    print(f"skip schedule capture [{lang}]")
                 root.after(300, go)
             elif n == 4:
                 open_flyout(root)
@@ -142,18 +151,18 @@ def main() -> None:
 
                 fw = flyout_mod._flyout_window
                 if fw is not None and fw.winfo_exists():
-                    _grab(fw, OUT / "ss7_flyout.png")
+                    _grab(fw, OUT / f"{prefix}-flyout.png")
                     close_flyout()
                 else:
-                    print("skip flyout capture")
-                restore_actions()
+                    print(f"skip flyout [{lang}]")
+                restore()
                 root.after(200, root.destroy)
             else:
-                restore_actions()
+                restore()
                 root.destroy()
         except Exception as exc:
-            restore_actions()
-            print("ERROR:", exc)
+            restore()
+            print(f"ERROR [{lang}]:", exc)
             try:
                 root.destroy()
             except tk.TclError:
@@ -161,6 +170,32 @@ def main() -> None:
 
     root.after(900, go)
     root.mainloop()
+
+
+def main() -> None:
+    from homepchub.i18n import get_lang, set_lang
+
+    prev = get_lang()
+    try:
+        for lang in ("en", "tr"):
+            print(f"--- capturing {lang} ---")
+            _capture_lang(lang)
+    finally:
+        set_lang(prev if prev in ("tr", "en") else "tr")
+        # remove legacy names
+        for name in (
+            "ss1.png",
+            "ss2.png",
+            "ss3.png",
+            "ss4_main_bulb_menu.png",
+            "ss5_ambient_editor.png",
+            "ss6_schedule.png",
+            "ss7_flyout.png",
+        ):
+            p = OUT / name
+            if p.exists():
+                p.unlink()
+                print(f"deleted {name}")
     print("done ->", OUT)
 
 

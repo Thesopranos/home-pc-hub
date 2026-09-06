@@ -23,25 +23,23 @@ Home Pc Hub runs in the Windows tray. You scan for Tapo devices, build your own 
 
 ### Screenshots
 
-**Full settings** — device list, **Ampul ▾** mini menu under the title, language & theme, LAN scan (Scan / Add selected always visible):
+**Full settings** — device list, **Bulb ▾** mini menu under the title, language & theme, LAN scan (Scan / Add selected always visible):
 
-![Full settings window with Ampul menu](screenshots/ss4_main_bulb_menu.png)
+![Full settings window with Bulb menu](screenshots/en-main.png)
 
-**Edit ambient modes** — open via **Ampul ▾ → Ortam modlarını düzenle…**: Kelvin/brightness, custom modes, and **linked actions** (other bulb same mode / plug on-off):
+**Edit ambient modes** — open via **Bulb ▾ → Edit ambient modes…**: Kelvin/brightness, custom modes, and **linked actions** (other bulb same mode / plug on-off):
 
-![Ambient mode editor](screenshots/ss5_ambient_editor.png)
+![Ambient mode editor](screenshots/en-ambient-editor.png)
 
 **Schedule** — from plug/outlet **··· → Schedule…**: timed tab with aligned Type / Time / Action fields and themed tabs:
 
-![Schedule panel](screenshots/ss6_schedule.png)
+![Schedule panel](screenshots/en-schedule.png)
 
 **Tray flyout** — single-click tray: separators between outlets/devices, ambient **dropdown** + **(i)** tip:
 
-![Tray flyout](screenshots/ss7_flyout.png)
+![Tray flyout](screenshots/en-flyout.png)
 
-Older reference shots (device list / light panel / early flyout): [ss1](screenshots/ss1.png) · [ss2](screenshots/ss2.png) · [ss3](screenshots/ss3.png)
-
-> Screenshots were captured from live Tk windows with Pillow `ImageGrab` (`scripts/capture_readme_screens.py`) — Tkinter has no built-in window screenshot API.
+> Screenshots captured live in English UI via Pillow `ImageGrab` (`scripts/capture_readme_screens.py`).
 
 ### Requirements
 
@@ -192,23 +190,21 @@ Home Pc Hub, Windows tepsi uygulamasıdır. Tapo cihazlarını ağda bulur, kend
 
 **Tam ayarlar** — cihaz listesi, başlık altında **Ampul ▾** mini menü, dil & tema, ağ tarama (Tara / Seçilenleri ekle görünür):
 
-![Ampul menülü ana ayar penceresi](screenshots/ss4_main_bulb_menu.png)
+![Ampul menülü ana ayar penceresi](screenshots/tr-main.png)
 
 **Ortam modlarını düzenle** — **Ampul ▾ → Ortam modlarını düzenle…**: Kelvin/parlaklık, özel modlar ve **ek aksiyonlar** (başka ampul aynı moda / priz aç-kapa):
 
-![Ortam modu düzenleyici](screenshots/ss5_ambient_editor.png)
+![Ortam modu düzenleyici](screenshots/tr-ambient-editor.png)
 
 **Zamanlama** — priz/soket **··· → Zamanlama…**: hizalı Tür / Saat / İşlem alanları ve temalı sekmeler:
 
-![Zamanlama paneli](screenshots/ss6_schedule.png)
+![Zamanlama paneli](screenshots/tr-schedule.png)
 
 **Tepsi flyout** — tek tık: cihaz/soket ayırıcıları, ortam **dropdown** + **(i)** ipucu:
 
-![Tepsi flyout](screenshots/ss7_flyout.png)
+![Tepsi flyout](screenshots/tr-flyout.png)
 
-Eski referans kareler (liste / ışık paneli / erken flyout): [ss1](screenshots/ss1.png) · [ss2](screenshots/ss2.png) · [ss3](screenshots/ss3.png)
-
-> Görseller canlı Tk pencerelerinden Pillow `ImageGrab` ile alındı (`scripts/capture_readme_screens.py`) — Tkinter’da yerleşik pencere SS API’si yok.
+> Görseller Türkçe arayüzde canlı alındı (`scripts/capture_readme_screens.py`, Pillow `ImageGrab`).
 
 ### Gereksinimler
 
