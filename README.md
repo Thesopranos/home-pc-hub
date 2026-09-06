@@ -25,19 +25,19 @@ Home Pc Hub runs in the Windows tray. You scan for Tapo devices, build your own 
 
 **Full settings** — device list, **Bulb ▾** mini menu under the title, language & theme, LAN scan (Scan / Add selected always visible):
 
-![Full settings window with Bulb menu](screenshots/en-main.png)
+![Full settings window with Bulb menu](screenshots/en/main.png)
 
 **Edit ambient modes** — open via **Bulb ▾ → Edit ambient modes…**: Kelvin/brightness, custom modes, and **linked actions** (other bulb same mode / plug on-off):
 
-![Ambient mode editor](screenshots/en-ambient-editor.png)
+![Ambient mode editor](screenshots/en/ambient-editor.png)
 
 **Schedule** — from plug/outlet **··· → Schedule…**: timed tab with aligned Type / Time / Action fields and themed tabs:
 
-![Schedule panel](screenshots/en-schedule.png)
+![Schedule panel](screenshots/en/schedule.png)
 
 **Tray flyout** — single-click tray: separators between outlets/devices, ambient **dropdown** + **(i)** tip:
 
-![Tray flyout](screenshots/en-flyout.png)
+![Tray flyout](screenshots/en/flyout.png)
 
 > Screenshots captured live in English UI via Pillow `ImageGrab`.
 
@@ -190,19 +190,19 @@ Home Pc Hub, Windows tepsi uygulamasıdır. Tapo cihazlarını ağda bulur, kend
 
 **Tam ayarlar** — cihaz listesi, başlık altında **Ampul ▾** mini menü, dil & tema, ağ tarama (Tara / Seçilenleri ekle görünür):
 
-![Ampul menülü ana ayar penceresi](screenshots/tr-main.png)
+![Ampul menülü ana ayar penceresi](screenshots/tr/main.png)
 
 **Ortam modlarını düzenle** — **Ampul ▾ → Ortam modlarını düzenle…**: Kelvin/parlaklık, özel modlar ve **ek aksiyonlar** (başka ampul aynı moda / priz aç-kapa):
 
-![Ortam modu düzenleyici](screenshots/tr-ambient-editor.png)
+![Ortam modu düzenleyici](screenshots/tr/ambient-editor.png)
 
 **Zamanlama** — priz/soket **··· → Zamanlama…**: hizalı Tür / Saat / İşlem alanları ve temalı sekmeler:
 
-![Zamanlama paneli](screenshots/tr-schedule.png)
+![Zamanlama paneli](screenshots/tr/schedule.png)
 
 **Tepsi flyout** — tek tık: cihaz/soket ayırıcıları, ortam **dropdown** + **(i)** ipucu:
 
-![Tepsi flyout](screenshots/tr-flyout.png)
+![Tepsi flyout](screenshots/tr/flyout.png)
 
 > Görseller Türkçe arayüzde canlı alındı (Pillow `ImageGrab`).
 
