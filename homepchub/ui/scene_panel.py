@@ -128,6 +128,7 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
         activestyle="none",
         borderwidth=0,
         highlightthickness=0,
+        cursor="hand2",
     )
     steps_list.grid(row=4, column=0, sticky="ew", pady=(6, 0))
 
@@ -261,7 +262,7 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
     action_combo.bind("<<ComboboxSelected>>", sync_mode_visibility)
     sync_action_choices()
 
-    def refresh_steps_view() -> None:
+    def refresh_steps_view(select_index: int | None = None) -> None:
         steps_list.delete(0, "end")
         label_by_key = {tgt["key"]: tgt["label"] for tgt in targets}
         for step in draft_steps:
@@ -278,6 +279,41 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
                 "end",
                 f"{dev} → {_action_label(step['action'], step.get('preset_id'))}",
             )
+        if select_index is not None and 0 <= select_index < len(draft_steps):
+            steps_list.selection_clear(0, "end")
+            steps_list.selection_set(select_index)
+            steps_list.activate(select_index)
+            steps_list.see(select_index)
+
+    drag = {"index": None}
+
+    def _steps_drag_start(event):
+        idx = steps_list.nearest(event.y)
+        if 0 <= idx < len(draft_steps):
+            drag["index"] = idx
+            steps_list.selection_clear(0, "end")
+            steps_list.selection_set(idx)
+            steps_list.activate(idx)
+        else:
+            drag["index"] = None
+
+    def _steps_drag_motion(event):
+        from_i = drag["index"]
+        if from_i is None:
+            return
+        to_i = steps_list.nearest(event.y)
+        if to_i < 0 or to_i >= len(draft_steps) or to_i == from_i:
+            return
+        draft_steps.insert(to_i, draft_steps.pop(from_i))
+        drag["index"] = to_i
+        refresh_steps_view(to_i)
+
+    def _steps_drag_end(_event=None):
+        drag["index"] = None
+
+    steps_list.bind("<ButtonPress-1>", _steps_drag_start)
+    steps_list.bind("<B1-Motion>", _steps_drag_motion)
+    steps_list.bind("<ButtonRelease-1>", _steps_drag_end)
 
     def on_add_step() -> None:
         tgt = target_by_label.get(target_var.get())
