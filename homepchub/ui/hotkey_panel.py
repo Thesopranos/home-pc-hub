@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 
 from homepchub.core import hotkeys as hotkey_engine
+from homepchub.core import scenes as scene_store
 from homepchub.core.config import load_config
 from homepchub.i18n import t
 from homepchub.ui.layout import ThemedVScrollbar, size_window
@@ -204,6 +205,18 @@ def open_hotkey_panel(parent: tk.Misc, theme_mode: str) -> None:
     canvas.pack(side="left", fill="both", expand=True)
     scroll.pack(side="right", fill="y")
 
+    def _on_mousewheel(event):
+        if event.delta:
+            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        return "break"
+
+    def _bind_mousewheel(widget):
+        widget.bind("<MouseWheel>", _on_mousewheel)
+        for child in widget.winfo_children():
+            _bind_mousewheel(child)
+
+    canvas.bind("<MouseWheel>", _on_mousewheel)
+
     def _btn_text(var: tk.StringVar) -> str:
         cur = (var.get() or "").strip()
         return cur if cur else t("hotkey.empty")
@@ -322,6 +335,40 @@ def open_hotkey_panel(parent: tk.Misc, theme_mode: str) -> None:
             _add_row(body, label, var, row_i)
             row_i += 1
 
+    # Scenes
+    tk.Label(
+        body,
+        text=t("hotkey.section_scenes"),
+        bg=theme["bg"],
+        fg=theme["text_muted"],
+        font=FONTS["ui_bold"],
+        anchor="w",
+    ).grid(row=row_i, column=0, columnspan=3, sticky="w", pady=(14, 4))
+    row_i += 1
+    scene_combos = dict(hk.get("scenes") or {})
+    scenes = scene_store.list_scenes()
+    if not scenes:
+        tk.Label(
+            body,
+            text=t("hotkey.no_scenes"),
+            bg=theme["bg"],
+            fg=theme["text_muted"],
+            font=FONTS["subtitle"],
+            anchor="w",
+        ).grid(row=row_i, column=0, columnspan=3, sticky="w")
+        row_i += 1
+    for scene in scenes:
+        sid = scene["id"]
+        key = hotkey_engine.scene_key(sid)
+        label = scene["label"]
+        row_labels[key] = t("hotkey.scene_label", name=label)
+        var = tk.StringVar(value=scene_combos.get(sid, ""))
+        values[key] = var
+        _add_row(body, label, var, row_i)
+        row_i += 1
+
+    _bind_mousewheel(body)
+
     foot = tk.Frame(root, bg=theme["bg"])
     foot.pack(fill="x", pady=(12, 0))
 
@@ -331,22 +378,33 @@ def open_hotkey_panel(parent: tk.Misc, theme_mode: str) -> None:
 
     def on_save():
         hotkey_engine.cancel_capture()
-        targets_out = {
-            k: v.get().strip()
-            for k, v in values.items()
-            if k not in ("flyout", "settings") and v.get().strip()
-        }
+        targets_out = {}
+        scenes_out = {}
+        for k, v in values.items():
+            if k in ("flyout", "settings"):
+                continue
+            combo = v.get().strip()
+            if not combo:
+                continue
+            sid = hotkey_engine.parse_scene_key(k)
+            if sid is not None:
+                scenes_out[sid] = combo
+            else:
+                targets_out[k] = combo
+        merged = dict(targets_out)
+        for sid, combo in scenes_out.items():
+            merged[hotkey_engine.scene_key(sid)] = combo
         prev_shared = list(hk.get("shared") or [])
-        pending = hotkey_engine.new_conflicts(targets_out, prev_shared)
+        pending = hotkey_engine.new_conflicts(merged, prev_shared)
         if pending:
             if not _ask_share_conflicts(win, theme_mode, pending, row_labels):
                 return
-        # After save (and optional accept), every remaining conflict is shared
-        shared = list(hotkey_engine.find_target_conflicts(targets_out).keys())
+        shared = list(hotkey_engine.find_target_conflicts(merged).keys())
         hotkey_engine.set_hotkeys(
             flyout=values["flyout"].get(),
             settings=values["settings"].get(),
             targets=targets_out,
+            scenes=scenes_out,
             shared=shared,
         )
         win.destroy()

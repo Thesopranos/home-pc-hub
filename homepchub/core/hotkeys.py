@@ -63,6 +63,16 @@ def target_key(device_id: str, socket: int | None = None) -> str:
     return f"{device_id}:{int(socket)}"
 
 
+def scene_key(scene_id: str) -> str:
+    return f"scene:{scene_id}"
+
+
+def parse_scene_key(key: str) -> str | None:
+    if key.startswith("scene:"):
+        return key[6:]
+    return None
+
+
 def parse_target_key(key: str) -> tuple[str, int | None]:
     if ":" in key:
         did, sock = key.rsplit(":", 1)
@@ -81,10 +91,14 @@ def get_hotkeys() -> dict:
     shared = bucket.get("shared") or []
     if not isinstance(shared, list):
         shared = []
+    scenes = bucket.get("scenes") or {}
+    if not isinstance(scenes, dict):
+        scenes = {}
     return {
         "flyout": str(bucket.get("flyout") or ""),
         "settings": str(bucket.get("settings") or ""),
         "targets": dict(bucket.get("targets") or {}),
+        "scenes": {str(k): str(v) for k, v in scenes.items() if str(v).strip()},
         "shared": [format_combo(str(c)) for c in shared if str(c).strip()],
     }
 
@@ -117,11 +131,20 @@ def set_hotkeys(
     flyout: str,
     settings: str,
     targets: dict[str, str],
+    scenes: dict[str, str] | None = None,
     shared: list[str] | None = None,
 ) -> None:
     cfg = load_config()
     cleaned = {k: str(v).strip() for k, v in targets.items() if str(v).strip()}
-    conflicts = find_target_conflicts(cleaned)
+    scene_cleaned = {
+        str(k): str(v).strip()
+        for k, v in (scenes or {}).items()
+        if str(v).strip()
+    }
+    merged = dict(cleaned)
+    for sid, combo in scene_cleaned.items():
+        merged[scene_key(sid)] = combo
+    conflicts = find_target_conflicts(merged)
     if shared is None:
         prev = get_hotkeys().get("shared") or []
         shared = [c for c in prev if c in conflicts]
@@ -131,6 +154,7 @@ def set_hotkeys(
         "flyout": (flyout or "").strip(),
         "settings": (settings or "").strip(),
         "targets": cleaned,
+        "scenes": scene_cleaned,
         "shared": shared,
     }
     save_config(cfg)
@@ -159,6 +183,15 @@ def _toggle_target(device_id: str, socket: int | None) -> None:
     try:
         on = get_power(host, socket)
         set_power(host, not on, socket=socket)
+    except Exception:
+        pass
+
+
+def _run_scene(scene_id: str) -> None:
+    from homepchub.core import scenes as scene_store
+
+    try:
+        scene_store.apply_scene(scene_id)
     except Exception:
         pass
 
@@ -264,6 +297,10 @@ def reload() -> None:
         by_combo[format_combo(combo)].append(
             functools.partial(_toggle_target, did, sock)
         )
+    for sid, combo in (hk.get("scenes") or {}).items():
+        if not combo:
+            continue
+        by_combo[format_combo(combo)].append(functools.partial(_run_scene, sid))
     for combo, cbs in by_combo.items():
         if len(cbs) == 1:
             _register(combo, cbs[0])
