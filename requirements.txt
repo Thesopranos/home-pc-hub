@@ -1,0 +1,3 @@
+python-kasa
+pystray
+Pillow

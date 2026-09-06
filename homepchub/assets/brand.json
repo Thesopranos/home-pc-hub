@@ -1,0 +1,13 @@
+{
+  "name": "Home PC Hub",
+  "tagline": "akıllı cihaz kontrol paneli",
+  "font": "Inter (400 / 500 / 600)",
+  "colors": {
+    "primary": "#1FA98C",
+    "primaryDeep": "#0E6B58",
+    "primaryLight": "#9FE8D6",
+    "ink": "#16211F",
+    "paper": "#F2F5F4",
+    "night": "#0B1A17"
+  }
+}
