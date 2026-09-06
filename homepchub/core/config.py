@@ -18,6 +18,7 @@ DEFAULTS = {
         "flyout": "ctrl+shift+h",
         "settings": "",
         "targets": {},
+        "shared": [],
     },
 }
 

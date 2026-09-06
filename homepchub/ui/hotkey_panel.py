@@ -23,6 +23,110 @@ def _device_label(device: dict, socket: int | None = None) -> str:
     return f"{name} · {sock_name}"
 
 
+def _ask_share_conflicts(
+    parent: tk.Misc,
+    theme_mode: str,
+    conflicts: dict[str, list[str]],
+    labels: dict[str, str],
+) -> bool:
+    """Return True if user chooses 'use together', False if cancel."""
+    theme = get_theme(theme_mode)
+    result = {"ok": False}
+
+    dlg = tk.Toplevel(parent)
+    dlg.title(t("hotkey.conflict.title"))
+    dlg.configure(bg=theme["bg"])
+    dlg.transient(parent)
+    dlg.grab_set()
+    dress_window(dlg, theme, dark=theme_mode == "dark")
+    size_window(dlg, 420, 360, min_width=360, min_height=280)
+
+    style = ttk.Style(dlg)
+    apply_ttk(style, theme)
+
+    wrap = tk.Frame(dlg, bg=theme["bg"], padx=16, pady=14)
+    wrap.pack(fill="both", expand=True)
+
+    tk.Label(
+        wrap,
+        text=t("hotkey.conflict.title"),
+        bg=theme["bg"],
+        fg=theme["text"],
+        font=FONTS["title"],
+        anchor="w",
+    ).pack(fill="x")
+    tk.Label(
+        wrap,
+        text=t("hotkey.conflict.blurb"),
+        bg=theme["bg"],
+        fg=theme["text_muted"],
+        font=FONTS["subtitle"],
+        anchor="w",
+        wraplength=380,
+        justify="left",
+    ).pack(fill="x", pady=(6, 10))
+
+    list_wrap = tk.Frame(wrap, bg=theme["surface"], padx=10, pady=8)
+    list_wrap.pack(fill="both", expand=True)
+
+    canvas = tk.Canvas(list_wrap, bg=theme["surface"], highlightthickness=0, bd=0)
+    scroll = ThemedVScrollbar(list_wrap, theme, command=canvas.yview)
+    body = tk.Frame(canvas, bg=theme["surface"])
+    body.bind(
+        "<Configure>",
+        lambda e: canvas.configure(scrollregion=canvas.bbox("all")),
+    )
+    cid = canvas.create_window((0, 0), window=body, anchor="nw")
+    canvas.bind("<Configure>", lambda e: canvas.itemconfigure(cid, width=e.width))
+    canvas.configure(yscrollcommand=scroll.set)
+    canvas.pack(side="left", fill="both", expand=True)
+    scroll.pack(side="right", fill="y")
+
+    for combo, keys in conflicts.items():
+        tk.Label(
+            body,
+            text=combo,
+            bg=theme["surface"],
+            fg=theme["accent"],
+            font=FONTS["ui_bold"],
+            anchor="w",
+        ).pack(fill="x", pady=(6, 2))
+        for key in keys:
+            tk.Label(
+                body,
+                text=f"  · {labels.get(key, key)}",
+                bg=theme["surface"],
+                fg=theme["text"],
+                font=FONTS["ui"],
+                anchor="w",
+            ).pack(fill="x")
+
+    foot = tk.Frame(wrap, bg=theme["bg"])
+    foot.pack(fill="x", pady=(12, 0))
+
+    def cancel():
+        result["ok"] = False
+        dlg.destroy()
+
+    def share():
+        result["ok"] = True
+        dlg.destroy()
+
+    ttk.Button(
+        foot, text=t("hotkey.conflict.cancel"), style="Ghost.TButton", command=cancel
+    ).pack(side="right")
+    ttk.Button(
+        foot,
+        text=t("hotkey.conflict.share"),
+        style="Accent.TButton",
+        command=share,
+    ).pack(side="right", padx=(0, 8))
+
+    dlg.protocol("WM_DELETE_WINDOW", cancel)
+    dlg.wait_window()
+    return bool(result["ok"])
+
+
 def open_hotkey_panel(parent: tk.Misc, theme_mode: str) -> None:
     theme = get_theme(theme_mode)
     win = tk.Toplevel(parent)
@@ -78,6 +182,7 @@ def open_hotkey_panel(parent: tk.Misc, theme_mode: str) -> None:
         "flyout": tk.StringVar(value=hk["flyout"]),
         "settings": tk.StringVar(value=hk["settings"]),
     }
+    row_labels: dict[str, str] = {}
     active_capture: dict[str, object | None] = {"row": None}
 
     list_wrap = tk.Frame(root, bg=theme["bg"])
@@ -156,7 +261,6 @@ def open_hotkey_panel(parent: tk.Misc, theme_mode: str) -> None:
         ).grid(row=row, column=2, sticky="e", padx=(8, 0), pady=5)
         parent.columnconfigure(1, weight=1)
 
-    # App actions
     section = tk.Label(
         body,
         text=t("hotkey.section_app"),
@@ -169,7 +273,6 @@ def open_hotkey_panel(parent: tk.Misc, theme_mode: str) -> None:
     _add_row(body, t("hotkey.flyout"), values["flyout"], 1)
     _add_row(body, t("hotkey.settings"), values["settings"], 2)
 
-    # Devices
     tk.Label(
         body,
         text=t("hotkey.section_devices"),
@@ -204,15 +307,19 @@ def open_hotkey_panel(parent: tk.Misc, theme_mode: str) -> None:
             for s in sockets:
                 idx = int(s.get("index"))
                 key = hotkey_engine.target_key(did, idx)
+                label = _device_label(device, idx)
+                row_labels[key] = label
                 var = tk.StringVar(value=targets.get(key, ""))
                 values[key] = var
-                _add_row(body, _device_label(device, idx), var, row_i)
+                _add_row(body, label, var, row_i)
                 row_i += 1
         else:
             key = hotkey_engine.target_key(did)
+            label = _device_label(device)
+            row_labels[key] = label
             var = tk.StringVar(value=targets.get(key, ""))
             values[key] = var
-            _add_row(body, _device_label(device), var, row_i)
+            _add_row(body, label, var, row_i)
             row_i += 1
 
     foot = tk.Frame(root, bg=theme["bg"])
@@ -229,11 +336,18 @@ def open_hotkey_panel(parent: tk.Misc, theme_mode: str) -> None:
             for k, v in values.items()
             if k not in ("flyout", "settings") and v.get().strip()
         }
-        # drop stale targets for removed devices (already only current rows)
+        prev_shared = list(hk.get("shared") or [])
+        pending = hotkey_engine.new_conflicts(targets_out, prev_shared)
+        if pending:
+            if not _ask_share_conflicts(win, theme_mode, pending, row_labels):
+                return
+        # After save (and optional accept), every remaining conflict is shared
+        shared = list(hotkey_engine.find_target_conflicts(targets_out).keys())
         hotkey_engine.set_hotkeys(
             flyout=values["flyout"].get(),
             settings=values["settings"].get(),
             targets=targets_out,
+            shared=shared,
         )
         win.destroy()
 

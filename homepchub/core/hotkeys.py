@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import functools
 import threading
+from collections import defaultdict
 from typing import Callable
 
 from homepchub.core.config import load_config, save_config
@@ -48,7 +49,9 @@ def combo_keys(combo: str) -> frozenset[str]:
     )
 
 
-def format_combo(keys: set[str] | frozenset[str]) -> str:
+def format_combo(keys: set[str] | frozenset[str] | str) -> str:
+    if isinstance(keys, str):
+        keys = combo_keys(keys)
     mods = [m for m in _MOD_ORDER if m in keys]
     rest = sorted(k for k in keys if k not in _MODIFIERS)
     return "+".join(mods + rest)
@@ -75,20 +78,60 @@ def get_hotkeys() -> dict:
     bucket = cfg.get("hotkeys")
     if not isinstance(bucket, dict):
         bucket = {}
+    shared = bucket.get("shared") or []
+    if not isinstance(shared, list):
+        shared = []
     return {
         "flyout": str(bucket.get("flyout") or ""),
         "settings": str(bucket.get("settings") or ""),
         "targets": dict(bucket.get("targets") or {}),
+        "shared": [format_combo(str(c)) for c in shared if str(c).strip()],
     }
 
 
-def set_hotkeys(*, flyout: str, settings: str, targets: dict[str, str]) -> None:
+def find_target_conflicts(targets: dict[str, str]) -> dict[str, list[str]]:
+    """Normalized combo → target keys (only groups with 2+ bindings)."""
+    groups: dict[str, list[str]] = defaultdict(list)
+    for key, combo in targets.items():
+        c = format_combo(combo)
+        if not c:
+            continue
+        groups[c].append(key)
+    return {c: keys for c, keys in groups.items() if len(keys) > 1}
+
+
+def new_conflicts(
+    targets: dict[str, str], shared: list[str] | None = None
+) -> dict[str, list[str]]:
+    """Conflicts that are not yet marked as shared."""
+    allowed = {format_combo(c) for c in (shared or [])}
+    return {
+        combo: keys
+        for combo, keys in find_target_conflicts(targets).items()
+        if combo not in allowed
+    }
+
+
+def set_hotkeys(
+    *,
+    flyout: str,
+    settings: str,
+    targets: dict[str, str],
+    shared: list[str] | None = None,
+) -> None:
     cfg = load_config()
     cleaned = {k: str(v).strip() for k, v in targets.items() if str(v).strip()}
+    conflicts = find_target_conflicts(cleaned)
+    if shared is None:
+        prev = get_hotkeys().get("shared") or []
+        shared = [c for c in prev if c in conflicts]
+    else:
+        shared = [format_combo(c) for c in shared if format_combo(c) in conflicts]
     cfg["hotkeys"] = {
         "flyout": (flyout or "").strip(),
         "settings": (settings or "").strip(),
         "targets": cleaned,
+        "shared": shared,
     }
     save_config(cfg)
     reload()
@@ -120,6 +163,33 @@ def _toggle_target(device_id: str, socket: int | None) -> None:
         pass
 
 
+def _chain(callbacks: list[Callable[[], None]]) -> Callable[[], None]:
+    def run():
+        for cb in callbacks:
+            try:
+                cb()
+            except Exception:
+                pass
+
+    return run
+
+
+def _register(combo: str, callback: Callable[[], None]) -> None:
+    keys = combo_keys(combo)
+    if not keys:
+        return
+    existing = _hotkey_map.get(keys)
+    if existing is None:
+        _hotkey_map[keys] = callback
+        return
+    prev = getattr(existing, "_chain_parts", None)
+    parts = list(prev) if prev else [existing]
+    parts.append(callback)
+    chained = _chain(parts)
+    chained._chain_parts = parts  # type: ignore[attr-defined]
+    _hotkey_map[keys] = chained
+
+
 def _on_key_event(event) -> None:
     name = _normalize_key(event.name)
     if event.event_type == keyboard.KEY_DOWN:
@@ -128,7 +198,7 @@ def _on_key_event(event) -> None:
         _pressed.add(name)
         if _capturing:
             if name == "esc":
-                end_capture(None)  # cancel — keep previous
+                end_capture(None)
                 return
             if name not in _MODIFIERS:
                 end_capture(format_combo(_pressed))
@@ -182,14 +252,25 @@ def reload() -> None:
         return
     hk = get_hotkeys()
     if hk["flyout"] and "flyout" in _actions:
-        _hotkey_map[combo_keys(hk["flyout"])] = _actions["flyout"]
+        _register(hk["flyout"], _actions["flyout"])
     if hk["settings"] and "settings" in _actions:
-        _hotkey_map[combo_keys(hk["settings"])] = _actions["settings"]
+        _register(hk["settings"], _actions["settings"])
+
+    by_combo: dict[str, list[Callable[[], None]]] = defaultdict(list)
     for key, combo in (hk["targets"] or {}).items():
         if not combo:
             continue
         did, sock = parse_target_key(key)
-        _hotkey_map[combo_keys(combo)] = functools.partial(_toggle_target, did, sock)
+        by_combo[format_combo(combo)].append(
+            functools.partial(_toggle_target, did, sock)
+        )
+    for combo, cbs in by_combo.items():
+        if len(cbs) == 1:
+            _register(combo, cbs[0])
+        else:
+            chained = _chain(cbs)
+            chained._chain_parts = cbs  # type: ignore[attr-defined]
+            _register(combo, chained)
     _ensure_hook()
 
 
