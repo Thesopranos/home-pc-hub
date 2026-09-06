@@ -522,6 +522,9 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
     mode_combo.bind("<<ComboboxSelected>>", _keep_step_selection)
     for w in (target_combo, action_combo, mode_combo, wait_entry):
         w.bind("<FocusIn>", _keep_step_selection, add="+")
+
+    act_btns = tk.Frame(form, bg=theme["surface"])
+    act_btns.grid(row=7, column=0, sticky="w", pady=(6, 0))
     ttk.Button(
         act_btns, text=t("scene.add_step"), style="TButton", command=on_add_step
     ).pack(side="left")
