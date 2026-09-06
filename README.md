@@ -333,9 +333,9 @@ Sekme çerçevesi temaya uygun renktedir (parlak sistem Notebook kenarlığı yo
 ```
 homepchub/
   assets/     tepsi/uygulama ikonları, logolar
-  core/       config, cihazlar (python-kasa), zamanlayıcı, ortam modları (+ overrides/özel/aksiyon store)
+  core/       config, cihazlar (python-kasa), zamanlayıcı, global kısayollar, ortam modları (+ overrides/özel/aksiyon store)
   i18n/       TR/EN metinler ve özellik etiketleri
-  ui/         tepsi, pencere, flyout, ampul/priz/zamanlama/mod-editörü, tema, başlık çubuğu
+  ui/         tepsi, pencere, flyout, ampul/priz/zamanlama/mod-editörü/kısayol, tema, başlık çubuğu
 tray_app.py   ince giriş (python -m homepchub ile aynı)
 ```
 
