@@ -211,6 +211,11 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
 
     def sync_mode_visibility(_e=None) -> None:
         tgt = target_by_label.get(target_var.get())
+        is_bulb = tgt is not None and tgt.get("kind") == "bulb" and bool(mode_labels)
+        if not is_bulb:
+            mode_combo.grid_remove()
+            return
+        mode_combo.grid(row=0, column=2, sticky="ew")
         keys = getattr(action_combo, "_keys", [])
         choices = list(action_combo.cget("values") or [])
         try:
@@ -218,17 +223,12 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
             action = keys[idx]
         except (ValueError, IndexError):
             action = None
-        show = (
-            tgt is not None
-            and tgt.get("kind") == "bulb"
-            and action == scene_store.ACTION_APPLY_MODE
-            and bool(mode_labels)
-        )
-        if show:
-            mode_combo.grid(row=0, column=2, sticky="ew")
+        # Keep the mode field visible for bulbs so the row doesn't jump when
+        # switching action; only enable it for apply_mode.
+        if action == scene_store.ACTION_APPLY_MODE:
             mode_combo.configure(state="readonly")
         else:
-            mode_combo.grid_remove()
+            mode_combo.configure(state="disabled")
 
     target_combo.bind("<<ComboboxSelected>>", sync_action_choices)
     action_combo.bind("<<ComboboxSelected>>", sync_mode_visibility)
