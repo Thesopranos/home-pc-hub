@@ -34,12 +34,12 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
     win.transient(parent)
     win.grab_set()
     dress_window(win, theme, dark=theme_mode == "dark")
-    size_window(win, 680, 560, min_width=560, min_height=440)
+    size_window(win, 780, 580, min_width=680, min_height=480)
 
     style = ttk.Style(win)
     apply_ttk(style, theme)
 
-    root = tk.Frame(win, bg=theme["bg"], padx=16, pady=14)
+    root = tk.Frame(win, bg=theme["bg"], padx=18, pady=16)
     root.pack(fill="both", expand=True)
     root.columnconfigure(1, weight=1)
     root.rowconfigure(2, weight=1)
@@ -59,9 +59,9 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
         fg=theme["text_muted"],
         font=FONTS["subtitle"],
         anchor="w",
-        wraplength=620,
+        wraplength=720,
         justify="left",
-    ).grid(row=1, column=0, columnspan=2, sticky="ew", pady=(4, 10))
+    ).grid(row=1, column=0, columnspan=2, sticky="ew", pady=(4, 12))
 
     # Left: scene list
     left = tk.Frame(root, bg=theme["surface"], padx=10, pady=10)
@@ -111,7 +111,7 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
         fg=theme["text_muted"],
         font=FONTS["meta"],
         anchor="w",
-        wraplength=400,
+        wraplength=480,
         justify="left",
     ).grid(row=3, column=0, sticky="ew", pady=(2, 0))
 
@@ -130,8 +130,10 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
     steps_list.grid(row=4, column=0, sticky="ew", pady=(6, 0))
 
     add_row = tk.Frame(form, bg=theme["surface"])
-    add_row.grid(row=5, column=0, sticky="ew", pady=(8, 0))
-    add_row.columnconfigure(0, weight=1)
+    add_row.grid(row=5, column=0, sticky="ew", pady=(10, 0))
+    add_row.columnconfigure(0, weight=3)
+    add_row.columnconfigure(1, weight=2)
+    add_row.columnconfigure(2, weight=2)
 
     targets = preset_store.iter_action_targets()
     target_by_label = {tgt["label"]: tgt for tgt in targets}
@@ -143,15 +145,15 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
         textvariable=target_var,
         values=[tgt["label"] for tgt in targets],
         state="readonly" if targets else "disabled",
-        width=24,
+        width=28,
     )
-    target_combo.grid(row=0, column=0, sticky="ew")
+    target_combo.grid(row=0, column=0, sticky="ew", padx=(0, 10))
 
     action_var = tk.StringVar()
     action_combo = ttk.Combobox(
-        add_row, textvariable=action_var, state="readonly", width=14
+        add_row, textvariable=action_var, state="readonly", width=16
     )
-    action_combo.grid(row=0, column=1, sticky="ew", padx=(6, 0))
+    action_combo.grid(row=0, column=1, sticky="ew", padx=(0, 10))
 
     mode_ids = bulb_presets.list_preset_ids()
     mode_labels = [bulb_presets.preset_label(pid) for pid in mode_ids]
@@ -162,7 +164,7 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
         textvariable=mode_var,
         values=mode_labels,
         state="readonly" if mode_labels else "disabled",
-        width=14,
+        width=16,
     )
     # Shown only for bulbs with "apply mode" — see sync_mode_visibility
 
@@ -223,7 +225,7 @@ def open_scene_panel(parent: tk.Misc, theme_mode: str) -> None:
             and bool(mode_labels)
         )
         if show:
-            mode_combo.grid(row=0, column=2, sticky="ew", padx=(6, 0))
+            mode_combo.grid(row=0, column=2, sticky="ew")
             mode_combo.configure(state="readonly")
         else:
             mode_combo.grid_remove()
